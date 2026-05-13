@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { createClient } from '@/lib/supabase-client'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ function UploadZone({ num, label, sublabel, icon, files, onFiles, multi = false 
   return (
     <div className={`ucard${hasFiles ? ' has' : ''}`}>
       <div className="uchead">
-        <div className="unum">{hasFiles ? <i className="ti ti-check" /> : num}</div>
+        <div className="unum-badge">{hasFiles ? <i className="ti ti-check" style={{fontSize:14}} /> : num}</div>
         <div>
           <div className="ulabel">{label}</div>
           <div className="usub">{sublabel}</div>
@@ -118,13 +119,15 @@ function UploadZone({ num, label, sublabel, icon, files, onFiles, multi = false 
           onDragLeave={() => setDrag(false)}
           onDrop={e => { e.preventDefault(); setDrag(false); addFiles(e.dataTransfer.files) }}
         >
-          <i className={`ti ti-${icon}`} />
-          <div className="dtxt">
-            {multi && hasFiles ? 'Ajouter une 2e photo' : 'Glisse ton fichier ici'}<br />
-            ou clique pour parcourir
+          <div className="upload-icon-wrap">
+            <i className={`ti ti-${icon}`} />
           </div>
-          <span className="dcta">{multi && hasFiles ? 'Ajouter' : 'Choisir un fichier'}</span>
-          <div className="dfmt">JPG · PNG · WEBP · PDF{multi ? ' · 2 max' : ''}</div>
+          <div className="dtxt">
+            {multi && hasFiles ? 'Ajouter une 2e photo' : 'Appuie pour choisir'}<br />
+            <span style={{fontSize:11, color:'var(--g400)'}}>ou glisse un fichier</span>
+          </div>
+          <span className="dcta" style={{marginTop:4}}>{multi && hasFiles ? '+ Ajouter' : 'Choisir un fichier'}</span>
+          <div className="dfmt">JPG · PNG · WEBP{multi ? ' · 2 max' : ''}</div>
         </div>
       )}
       <input ref={ref} type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
@@ -143,22 +146,64 @@ function HomeScreen({ onGenerate }) {
 
   return (
     <div className="home fu">
+      {/* Hero */}
       <div className="hero">
-        <div className="eyebrow">Bac de français</div>
-        <h1 className="h1">Génère ton analyse linéaire<br />en quelques secondes</h1>
-        <p className="hsub">Importe ton texte et tes notes — l'IA fait le reste.</p>
+        <div className="hero-badge">
+          <i className="ti ti-school" />
+          Bac de français
+        </div>
+        <h1 className="h1">Génère ton analyse<br />linéaire en quelques<br />secondes</h1>
+        <p className="hsub" style={{ marginTop: 10 }}>
+          Importe ton texte et tes notes —<br />l'IA génère la fiche complète.
+        </p>
       </div>
+
+      {/* Étapes visuelles */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, fontSize: 11, color: 'var(--g400)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--b600)', color: '#fff', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</div>
+          <span>Importe</span>
+        </div>
+        <i className="ti ti-arrow-right" style={{ fontSize: 12, color: 'var(--g200)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--g100)', color: 'var(--g600)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>2</div>
+          <span>L'IA analyse</span>
+        </div>
+        <i className="ti ti-arrow-right" style={{ fontSize: 12, color: 'var(--g200)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--g100)', color: 'var(--g600)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>3</div>
+          <span>Ta fiche</span>
+        </div>
+      </div>
+
+      {/* Upload cards */}
       <div className="ugrid">
         <UploadZone num="1" icon="file-text" label="Texte littéraire"
-          sublabel="Le poème ou l'extrait" files={texteFiles} onFiles={setTexteFiles} multi={false} />
-        <UploadZone num="2" icon="notes" label="Notes d'analyse"
+          sublabel="Photo du poème ou de l'extrait" files={texteFiles} onFiles={setTexteFiles} multi={false} />
+        <UploadZone num="2" icon="notebook" label="Notes d'analyse"
           sublabel="1 ou 2 photos de tes notes" files={notesFiles} onFiles={setNotesFiles} multi={true} />
       </div>
-      <button className="btn btn-p"
-        style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: 13, marginBottom: 4 }}
-        disabled={!ready} onClick={() => onGenerate(texteFiles[0], notesFiles)}>
-        <i className="ti ti-sparkles" /> Générer l'analyse
-      </button>
+
+      {/* Bouton générer */}
+      <div className="btn-generate-wrap">
+        <button className="btn btn-p btn-generate"
+          style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: 15, marginBottom: 4, borderRadius: 8, gap: 10 }}
+          disabled={!ready} onClick={() => onGenerate(texteFiles[0], notesFiles)}>
+          <i className="ti ti-sparkles" style={{ fontSize: 18 }} />
+          {ready ? 'Générer mon analyse' : 'Importe tes 2 documents'}
+        </button>
+      </div>
+
+      {/* Aide */}
+      {!ready && (
+        <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--g400)', marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: texteFiles.length ? '#22c55e' : 'var(--g200)', display: 'inline-block' }} />
+          Texte littéraire
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: notesFiles.length ? '#22c55e' : 'var(--g200)', display: 'inline-block', marginLeft: 8 }} />
+          Notes d'analyse
+        </div>
+      )}
+
       <Stepper step={0} />
     </div>
   )
@@ -209,6 +254,178 @@ function ResultScreen({ data, onRestart }) {
   ))
   const upT = (mi, v) => setAnalyse(a => a.map((m, i) => i === mi ? { ...m, transition: v } : m))
 
+  const exportPDF = async () => {
+    const mvts = (fiche.mouvements || []).map(m =>
+      `<div style="margin-bottom:6px">
+        <div style="font-size:11px;font-weight:bold">Mvt ${m.numero} · L. ${m.lignes}</div>
+        <div style="font-size:11px;font-weight:600">${m.titre || ''}</div>
+        <div style="font-size:10px">${m.resume || ''}</div>
+      </div>`
+    ).join('')
+
+    const analyseSections = (analyse || []).map(mouv => {
+      const versRows = (mouv.vers || []).map(v =>
+        `<tr>
+          <td style="padding:6px 8px;border:0.5px solid #ccc;vertical-align:top;width:35%">
+            <div style="font-size:10px;font-weight:600;color:#185FA5;margin-bottom:3px">${v.ref}</div>
+            <div style="font-size:11px;font-style:italic;color:#555;border-left:2px solid #B5D4F4;padding-left:6px">${v.texte}</div>
+          </td>
+          <td style="padding:6px 8px;border:0.5px solid #ccc;vertical-align:top">
+            <div style="margin-bottom:4px">${(v.procedes||[]).map(p => `<span style="font-size:9px;background:#E6F1FB;color:#0C447C;border-radius:3px;padding:1px 5px;margin-right:3px">${p}</span>`).join('')}</div>
+            <div style="font-size:11px;line-height:1.6">${v.analyse}</div>
+          </td>
+        </tr>`
+      ).join('')
+      return `
+        <div style="margin-bottom:16px;page-break-inside:avoid">
+          <div style="background:#185FA5;padding:8px 14px;display:flex;align-items:center;gap:10px;border-radius:4px 4px 0 0">
+            <span style="font-size:10px;font-weight:600;background:rgba(255,255,255,.2);color:#fff;padding:2px 7px;border-radius:3px">Mouvement ${mouv.numero}</span>
+            <span style="font-size:12px;font-style:italic;color:#fff;font-family:Georgia,serif">${mouv.titre}</span>
+            <span style="font-size:10px;color:rgba(255,255,255,.7);margin-left:auto">V. ${mouv.lignes}</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;border:0.5px solid #ccc">${versRows}</table>
+          ${mouv.transition ? `<div style="background:#E6F1FB;padding:7px 14px;font-size:11px;font-style:italic;color:#0C447C;border:0.5px solid #B5D4F4;border-top:none">→ ${mouv.transition}</div>` : ''}
+        </div>`
+    }).join('')
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Analyse linéaire — ${fiche.titre}</title>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; font-size:12px; color:#111; background:#fff; padding:20px; }
+  .page { max-width:750px; margin:0 auto; }
+
+  /* PAGE 1 — FICHE */
+  .template-grid {
+    display:grid;
+    grid-template-columns:200px 1fr;
+    grid-template-rows:auto auto;
+    gap:0;
+    border:1.5px solid #111;
+  }
+  .cell { border:1px solid #111; padding:10px 12px; }
+  .carte { grid-row: 1; grid-column: 1; }
+  .intro-section { grid-row: 1; grid-column: 2; display:flex; flex-direction:column; }
+  .mouv-cell { grid-row: 2; grid-column: 1; }
+  .concl-section { grid-row: 2; grid-column: 2; }
+
+  .section-title { font-size:22px; font-weight:800; text-align:center; padding:10px 0 6px; letter-spacing:-.5px; }
+  .block-title { font-size:11px; font-weight:600; margin-bottom:6px; }
+  .field { margin-bottom:5px; font-size:11px; }
+  .field span { font-weight:500; }
+  .inner-block { border:1px solid #111; padding:8px 10px; margin-bottom:0; flex:1; }
+  .concl-grid { display:grid; grid-template-columns:1fr 1fr; }
+  .concl-block { border:1px solid #111; padding:8px 10px; min-height:100px; }
+  .content-text { font-size:11px; line-height:1.6; margin-top:4px; }
+
+  /* PAGE 2 — ANALYSE */
+  .page-break { page-break-before:always; padding-top:10px; }
+  .analyse-title { font-family:'Spectral',serif; font-size:18px; font-weight:600; margin-bottom:16px; padding-bottom:6px; border-bottom:1.5px solid #185FA5; color:#185FA5; }
+
+  @media print {
+    @page { margin:1.2cm; size:A4; }
+    body { padding:0; }
+    .page-break { page-break-before:always; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- PAGE 1 : FICHE DE RÉVISION -->
+  <div class="template-grid">
+
+    <!-- Colonne gauche haut : Carte d'identité -->
+    <div class="cell carte">
+      <div class="block-title">Carte idd de l'oeuvre :</div>
+      <div class="field">Titre : <span>${fiche.titre||''}</span></div>
+      <div class="field">Auteur : <span>${fiche.auteur||''}</span></div>
+      <div class="field">Date : <span>${fiche.date||''}</span></div>
+      <div class="field">Genre littéraire : <span>${fiche.genre||''}</span></div>
+      <div class="field">Mouvement littéraire : <span>${fiche.mouvement||''}</span></div>
+      <div class="field">Parcours associé : <span>${fiche.parcours||''}</span></div>
+    </div>
+
+    <!-- Colonne droite haut : Introduction -->
+    <div style="border:1px solid #111">
+      <div class="section-title">Introduction :</div>
+      <div style="display:flex;flex-direction:column">
+        <div class="inner-block" style="border-left:none;border-right:none;border-top:1px solid #111;border-bottom:1px solid #111">
+          <div class="block-title">Introduction :</div>
+          <div class="content-text">${fiche.introduction||''}</div>
+        </div>
+        <div class="inner-block" style="border-left:none;border-right:none;border-top:none;border-bottom:1px solid #111">
+          <div class="block-title">Restitution de l'extrait :</div>
+          <div class="content-text">${fiche.restitution||''}</div>
+        </div>
+        <div class="inner-block" style="border-left:none;border-right:none;border-top:none;border-bottom:none">
+          <div class="block-title">Problématique :</div>
+          <div class="content-text">${fiche.problematique||''}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne gauche bas : Mouvements -->
+    <div class="cell mouv-cell">
+      <div class="block-title">Mouvement :</div>
+      ${mvts}
+    </div>
+
+    <!-- Colonne droite bas : Conclusion -->
+    <div style="border:1px solid #111">
+      <div class="section-title">Conclusion :</div>
+      <div class="concl-grid">
+        <div class="concl-block">
+          <div class="block-title">Réponse a la problématique :</div>
+          <div class="content-text">${fiche.reponse||''}</div>
+        </div>
+        <div class="concl-block" style="border-left:1px solid #111">
+          <div class="block-title">Ouverture :</div>
+          <div class="content-text">${fiche.ouverture||''}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PAGE 2 : ANALYSE DÉVELOPPÉE -->
+  <div class="page-break">
+    <div class="analyse-title">Analyse linéaire développée — ${fiche.titre} · ${fiche.auteur}</div>
+    ${analyseSections}
+  </div>
+
+</div>
+<script>window.onload = () => { window.print(); }</script>
+</body>
+</html>`
+
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
+
+    // Upload vers Supabase si connecté
+    if (user) {
+      try {
+        const pdfBlob = new Blob([html], { type: 'application/pdf' })
+        const date = new Date().toISOString().slice(0, 10)
+        const filename = `${fiche.titre}_${date}.pdf`.replace(/[^a-zA-Z0-9\u00C0-\u024F._-]/g, '_')
+        const formData = new FormData()
+        formData.append('file', pdfBlob, filename)
+        formData.append('userId', user.id)
+        formData.append('oeuvre', fiche.titre || 'Sans_titre')
+        formData.append('filename', filename)
+        await fetch('/api/storage', { method: 'POST', body: formData })
+      } catch(e) {
+        console.error('Erreur sauvegarde:', e)
+      }
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <nav className="nav">
@@ -218,7 +435,7 @@ function ResultScreen({ data, onRestart }) {
         </div>
         <div className="nav-actions">
           <button className="btn" onClick={onRestart}><i className="ti ti-refresh" />Recommencer</button>
-          <button className="btn btn-p"><i className="ti ti-download" />Exporter</button>
+          <button className="btn btn-p" onClick={exportPDF}><i className="ti ti-download" />Exporter PDF</button>
         </div>
       </nav>
 
@@ -230,7 +447,7 @@ function ResultScreen({ data, onRestart }) {
       </div>
 
       <div className="rbody">
-        {tab === 'fiche' ? (
+        <div id="print-fiche" style={{display: tab === 'fiche' ? 'block' : 'none'}}>
           <div className="tcard fu">
             <div className="thead">
               <div className="tht">{fiche.titre} — {fiche.auteur}</div>
@@ -281,7 +498,8 @@ function ResultScreen({ data, onRestart }) {
               </div>
             </div>
           </div>
-        ) : (
+        </div>
+        <div id="print-analyse" className="print-break" style={{display: tab === 'analyse' ? 'block' : 'none'}}>
           <div className="fu">
             {(analyse || []).map((mouv, mi) => (
               <div className="msec" key={mi}>
@@ -313,7 +531,7 @@ function ResultScreen({ data, onRestart }) {
               </div>
             ))}
           </div>
-        )}
+        </div>
         <Stepper step={2} />
       </div>
     </div>
@@ -328,6 +546,21 @@ export default function Page() {
   const [stepIdx, setStepIdx] = useState(0)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [user, setUser] = useState(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user || null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const seDeconnecter = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
 
   const handleGenerate = async (texteFile, notesFiles) => {
     setScreen('gen'); setProgress(0); setStepIdx(0); setError(null)
@@ -376,7 +609,16 @@ export default function Page() {
           <div className="nav-mark"><i className="ti ti-feather" /></div>
           Linéaire
         </div>
-        <span className="nav-meta">Analyse linéaire assistée par IA</span>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          {user ? (
+            <>
+              <a href="/bibliotheque" className="btn"><i className="ti ti-folder" />Ma bibliothèque</a>
+              <button className="btn" onClick={seDeconnecter}><i className="ti ti-logout" /></button>
+            </>
+          ) : (
+            <a href="/bibliotheque" className="btn"><i className="ti ti-folder" />Ma bibliothèque</a>
+          )}
+        </div>
       </nav>
 
       {screen === 'home' && <HomeScreen onGenerate={handleGenerate} />}
