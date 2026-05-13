@@ -68,10 +68,31 @@ export default function Bibliotheque() {
   }
 
   const telecharger = async (nomFichier) => {
-    const { data } = await supabase.storage
+    // Télécharger le contenu du fichier
+    const { data, error } = await supabase.storage
       .from('analyses')
-      .createSignedUrl(`${user.id}/${dossierOuvert}/${nomFichier}`, 60)
-    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+      .download(`${user.id}/${dossierOuvert}/${nomFichier}`)
+    if (error || !data) { alert('Erreur lors de l ouverture du fichier'); return }
+    
+    const text = await data.text()
+    const blob = new Blob([text], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
+  }
+
+  const telechargerFichier = async (nomFichier) => {
+    const { data, error } = await supabase.storage
+      .from('analyses')
+      .download(`${user.id}/${dossierOuvert}/${nomFichier}`)
+    if (error || !data) { alert('Erreur lors du téléchargement'); return }
+    
+    const url = URL.createObjectURL(data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = nomFichier
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
   }
 
   const supprimer = async (nomFichier) => {
@@ -192,8 +213,9 @@ export default function Bibliotheque() {
                   <i className="ti ti-file-type-pdf" style={{ fontSize: 20, color: '#e44', flexShrink: 0 }} />
                   <span style={{ flex: 1, fontSize: 13, color: 'var(--g800)' }}>{f.name.replace('.pdf', '').replace(/_/g, ' ')}</span>
                   <span style={{ fontSize: 11, color: 'var(--g400)' }}>{new Date(f.created_at).toLocaleDateString('fr-FR')}</span>
-                  <button className="btn" onClick={() => telecharger(f.name)}><i className="ti ti-download" /></button>
-                  <button className="btn" style={{ color: '#e44', borderColor: '#fca5a5' }} onClick={() => supprimer(f.name)}><i className="ti ti-trash" /></button>
+                  <button className="btn" onClick={() => telecharger(f.name)} title="Ouvrir"><i className="ti ti-eye" /></button>
+                  <button className="btn" onClick={() => telechargerFichier(f.name)} title="Télécharger"><i className="ti ti-download" /></button>
+                  <button className="btn" style={{ color: '#e44', borderColor: '#fca5a5' }} onClick={() => supprimer(f.name)} title="Supprimer"><i className="ti ti-trash" /></button>
                 </div>
               ))}
             </div>
