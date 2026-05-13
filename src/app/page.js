@@ -239,7 +239,7 @@ function GenScreen({ progress, stepIdx }) {
   )
 }
 
-function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginSent, setLoginSent, sendMagicLink }) {
+function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword }) {
   const [tab, setTab] = useState('fiche')
   const [fiche, setFiche] = useState(data.fiche)
   const [analyse, setAnalyse] = useState(data.analyse)
@@ -452,36 +452,37 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
               </button>
             </div>
 
-            {loginSent ? (
-              <div style={{ background: 'var(--b50)', border: '0.5px solid var(--b100)', borderRadius: 10, padding: 16, textAlign: 'center' }}>
-                <i className="ti ti-mail-check" style={{ fontSize: 32, color: 'var(--b600)', display: 'block', marginBottom: 8 }} />
-                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Lien envoyé !</div>
-                <div style={{ fontSize: 12, color: 'var(--g400)' }}>Vérifie ta boîte mail <strong>{loginEmail}</strong> et clique sur le lien pour te connecter.</div>
-              </div>
-            ) : (
-              <>
-                <div style={{ fontSize: 13, color: 'var(--g600)', marginBottom: 12 }}>
-                  Entre ton email pour recevoir un lien de connexion — pas de mot de passe.
+            <>
+              <input type="email" placeholder="Email" value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && loginWithPassword()}
+                style={{ width:'100%', padding:'10px 12px', border:'0.5px solid var(--g200)', borderRadius:8, fontSize:13, marginBottom:8, fontFamily:'inherit', outline:'none' }}
+                autoFocus
+              />
+              <input type="password" placeholder="Mot de passe" value={loginPassword}
+                onChange={e => setLoginPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && loginWithPassword()}
+                style={{ width:'100%', padding:'10px 12px', border:'0.5px solid var(--g200)', borderRadius:8, fontSize:13, marginBottom:8, fontFamily:'inherit', outline:'none' }}
+              />
+              {loginError && (
+                <div style={{ padding:'7px 10px', background:'#FEF2F2', border:'0.5px solid #FCA5A5', borderRadius:6, fontSize:12, color:'#991B1B', marginBottom:8 }}>
+                  {loginError}
                 </div>
-                <input
-                  type="email"
-                  placeholder="ton@email.com"
-                  value={loginEmail}
-                  onChange={e => setLoginEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && sendMagicLink()}
-                  style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--g200)', borderRadius: 8, fontSize: 13, marginBottom: 10, fontFamily: 'inherit', outline: 'none' }}
-                  autoFocus
-                />
-                <button className="btn btn-p" style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: 13 }}
-                  onClick={sendMagicLink} disabled={!loginEmail}>
-                  <i className="ti ti-send" /> Recevoir le lien
-                </button>
-                <button onClick={() => setShowLoginModal(false)}
-                  style={{ width: '100%', marginTop: 8, padding: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--g400)' }}>
-                  Continuer sans sauvegarder
-                </button>
-              </>
-            )}
+              )}
+              <button className="btn btn-p" style={{ width:'100%', justifyContent:'center', padding:'11px', fontSize:13 }}
+                onClick={loginWithPassword} disabled={!loginEmail || !loginPassword}>
+                <i className={`ti ti-${loginIsSignup ? 'user-plus' : 'login'}`} />
+                {loginIsSignup ? 'Créer mon compte' : 'Se connecter'}
+              </button>
+              <button onClick={() => { setLoginIsSignup(!loginIsSignup); setLoginError('') }}
+                style={{ width:'100%', marginTop:6, padding:'7px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)' }}>
+                {loginIsSignup ? 'Déjà un compte ? Se connecter' : 'Pas encore de compte ? Créer un compte'}
+              </button>
+              <button onClick={() => { setShowLoginModal(false); setLoginError('') }}
+                style={{ width:'100%', marginTop:4, padding:'7px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)' }}>
+                Continuer sans sauvegarder
+              </button>
+            </>
           </div>
         </div>
       )}
@@ -616,7 +617,9 @@ export default function Page() {
   const [user, setUser] = useState(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [loginEmail, setLoginEmail] = useState('')
-  const [loginSent, setLoginSent] = useState(false)
+  const [loginPassword, setLoginPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginIsSignup, setLoginIsSignup] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -648,13 +651,22 @@ export default function Page() {
     setUser(null)
   }
 
-  const sendMagicLink = async () => {
-    if (!loginEmail) return
-    const { error } = await supabase.auth.signInWithOtp({
-      email: loginEmail,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
-    })
-    if (!error) setLoginSent(true)
+  const loginWithPassword = async () => {
+    if (!loginEmail || !loginPassword) return
+    setLoginError('')
+    if (loginIsSignup) {
+      const { error } = await supabase.auth.signUp({ email: loginEmail, password: loginPassword })
+      if (error) { setLoginError(error.message); return }
+      const { data, error: e2 } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
+      if (e2) { setLoginError(e2.message); return }
+      setUser(data.user)
+      setShowLoginModal(false)
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
+      if (error) { setLoginError('Email ou mot de passe incorrect.'); return }
+      setUser(data.user)
+      setShowLoginModal(false)
+    }
   }
 
   const handleGenerate = async (texteFile, notesFiles) => {
@@ -698,8 +710,10 @@ export default function Page() {
       user={user}
       showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal}
       loginEmail={loginEmail} setLoginEmail={setLoginEmail}
-      loginSent={loginSent} setLoginSent={setLoginSent}
-      sendMagicLink={sendMagicLink}
+      loginPassword={loginPassword} setLoginPassword={setLoginPassword}
+      loginError={loginError} setLoginError={setLoginError}
+      loginIsSignup={loginIsSignup} setLoginIsSignup={setLoginIsSignup}
+      loginWithPassword={loginWithPassword}
     />
   }
 
