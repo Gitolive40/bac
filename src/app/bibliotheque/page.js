@@ -83,21 +83,22 @@ export default function Bibliotheque() {
   }
 
   const [email, setEmail] = useState('')
-  const [magicSent, setMagicSent] = useState(false)
-
-  const [loginError, setLoginError] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSignup, setIsSignup] = useState(false)
+  const [authError, setAuthError] = useState('')
 
   const seConnecter = async () => {
-    if (!email) return
-    setLoginError('')
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/bibliotheque` }
-    })
-    if (error) {
-      setLoginError(error.message)
+    if (!email || !password) return
+    setAuthError('')
+    if (isSignup) {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) { setAuthError(error.message); return }
+      // Connexion automatique après inscription
+      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+      if (loginError) setAuthError(loginError.message)
     } else {
-      setMagicSent(true)
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setAuthError(error.message)
     }
   }
 
@@ -124,49 +125,38 @@ export default function Bibliotheque() {
           <p style={{ fontSize: 13, color: 'var(--g400)', lineHeight: 1.5 }}>Retrouve toutes tes analyses sauvegardées,<br/>organisées par œuvre.</p>
         </div>
 
-        {magicSent ? (
-          <div style={{ background: 'var(--b50)', border: '0.5px solid var(--b100)', borderRadius: 10, padding: 20, textAlign: 'center' }}>
-            <i className="ti ti-mail-check" style={{ fontSize: 36, color: 'var(--b600)', display: 'block', marginBottom: 10 }} />
-            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 6 }}>Lien envoyé !</div>
-            <div style={{ fontSize: 12, color: 'var(--g400)', lineHeight: 1.5 }}>
-              Vérifie ta boîte mail<br/><strong style={{ color: 'var(--g800)' }}>{email}</strong><br/>
-              et clique sur le lien pour te connecter.
+        <>
+          <input type="email" placeholder="Email" value={email}
+            onChange={e => setEmail(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && seConnecter()}
+            style={{ width:'100%', padding:'11px 14px', border:'0.5px solid var(--g200)', borderRadius:8, fontSize:14, marginBottom:10, fontFamily:'inherit', outline:'none' }}
+            autoFocus
+          />
+          <input type="password" placeholder="Mot de passe (6 caractères min)" value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && seConnecter()}
+            style={{ width:'100%', padding:'11px 14px', border:'0.5px solid var(--g200)', borderRadius:8, fontSize:14, marginBottom:10, fontFamily:'inherit', outline:'none' }}
+          />
+          {authError && (
+            <div style={{ padding:'8px 12px', background:'#FEF2F2', border:'0.5px solid #FCA5A5', borderRadius:6, fontSize:12, color:'#991B1B', marginBottom:10 }}>
+              {authError === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : authError}
             </div>
-            <button onClick={() => setMagicSent(false)}
-              style={{ marginTop: 14, fontSize: 12, color: 'var(--b600)', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Changer d'email
-            </button>
+          )}
+          <button className="btn btn-p" style={{ width:'100%', justifyContent:'center', padding:'12px', fontSize:14 }}
+            onClick={seConnecter} disabled={!email || !password}>
+            <i className={`ti ti-${isSignup ? 'user-plus' : 'login'}`} />
+            {isSignup ? 'Créer mon compte' : 'Se connecter'}
+          </button>
+          <button onClick={() => { setIsSignup(!isSignup); setAuthError('') }}
+            style={{ width:'100%', marginTop:8, padding:'8px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)' }}>
+            {isSignup ? 'Déjà un compte ? Se connecter' : 'Pas encore de compte ? S'inscrire'}
+          </button>
+          <div style={{ borderTop:'0.5px solid var(--g100)', marginTop:14, paddingTop:14, textAlign:'center' }}>
+            <a href="/" style={{ fontSize:12, color:'var(--g400)', textDecoration:'none' }}>
+              <i className="ti ti-arrow-left" style={{ fontSize:11 }} /> Retour à l'application
+            </a>
           </div>
-        ) : (
-          <>
-            <input
-              type="email"
-              placeholder="ton@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && seConnecter()}
-              style={{ width: '100%', padding: '11px 14px', border: '0.5px solid var(--g200)', borderRadius: 8, fontSize: 14, marginBottom: 10, fontFamily: 'inherit', outline: 'none', transition: 'border-color .15s' }}
-              autoFocus
-            />
-            <button className="btn btn-p" style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: 14 }}
-              onClick={seConnecter} disabled={!email}>
-              <i className="ti ti-send" /> Recevoir le lien de connexion
-            </button>
-            {loginError && (
-              <div style={{ marginTop: 10, padding: '8px 12px', background: '#FEF2F2', border: '0.5px solid #FCA5A5', borderRadius: 6, fontSize: 12, color: '#991B1B' }}>
-                {loginError}
-              </div>
-            )}
-            <p style={{ fontSize: 11, color: 'var(--g400)', marginTop: 10, textAlign: 'center', lineHeight: 1.5 }}>
-              Un lien magique sera envoyé à ton adresse.<br/>Pas de mot de passe à retenir.
-            </p>
-            <div style={{ borderTop: '0.5px solid var(--g100)', marginTop: 16, paddingTop: 14, textAlign: 'center' }}>
-              <a href="/" style={{ fontSize: 12, color: 'var(--g400)', textDecoration: 'none' }}>
-                <i className="ti ti-arrow-left" style={{ fontSize: 11 }} /> Retour à l'application
-              </a>
-            </div>
-          </>
-        )}
+        </>
       </div>
     </div>
   )
