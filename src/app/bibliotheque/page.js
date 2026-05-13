@@ -12,11 +12,35 @@ export default function Bibliotheque() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      if (data.user) chargerDossiers(data.user.id)
-      else setLoading(false)
+    // D'abord essayer de récupérer la session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        chargerDossiers(session.user.id)
+      } else {
+        // Essayer getUser comme fallback
+        supabase.auth.getUser().then(({ data }) => {
+          if (data.user) {
+            setUser(data.user)
+            chargerDossiers(data.user.id)
+          } else {
+            setLoading(false)
+          }
+        })
+      }
     })
+
+    // Écouter les changements de session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        chargerDossiers(session.user.id)
+      } else {
+        setUser(null)
+        setLoading(false)
+      }
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   const chargerDossiers = async (userId) => {
