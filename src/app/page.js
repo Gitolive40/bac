@@ -614,6 +614,9 @@ export default function Page() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [user, setUser] = useState(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginSent, setLoginSent] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
