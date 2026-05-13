@@ -12,25 +12,29 @@ export default function Bibliotheque() {
   const supabase = createClient()
 
   useEffect(() => {
-    // D'abord essayer de récupérer la session
+    // Gérer le code OAuth dans l'URL
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ data }) => {
+        if (data.session) {
+          setUser(data.session.user)
+          chargerDossiers(data.session.user.id)
+          window.history.replaceState({}, '', '/bibliotheque')
+        }
+      })
+    }
+
+    // Récupérer la session existante
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user)
         chargerDossiers(session.user.id)
       } else {
-        // Essayer getUser comme fallback
-        supabase.auth.getUser().then(({ data }) => {
-          if (data.user) {
-            setUser(data.user)
-            chargerDossiers(data.user.id)
-          } else {
-            setLoading(false)
-          }
-        })
+        setLoading(false)
       }
     })
 
-    // Écouter les changements de session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUser(session.user)

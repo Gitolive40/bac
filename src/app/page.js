@@ -620,7 +620,23 @@ export default function Page() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    // Gérer le code OAuth dans l'URL (redirect depuis Supabase)
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ data }) => {
+        if (data.session) {
+          setUser(data.session.user)
+          // Nettoyer l'URL
+          window.history.replaceState({}, '', '/')
+        }
+      })
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null)
+    })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user || null)
     })
