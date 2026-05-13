@@ -498,7 +498,6 @@ function ResultScreen({ data, onRestart }) {
               <line x1="15.5" y1="15.5" x2="17" y2="17" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
-          Linéaire
         </div>
         <div className="nav-actions">
           <button className="btn" onClick={onRestart}><i className="ti ti-refresh" />Recommencer</button>
@@ -696,7 +695,6 @@ export default function Page() {
               <line x1="15.5" y1="15.5" x2="17" y2="17" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
-          Linéaire
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           {user ? (
