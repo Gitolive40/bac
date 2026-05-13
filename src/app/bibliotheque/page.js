@@ -85,13 +85,20 @@ export default function Bibliotheque() {
   const [email, setEmail] = useState('')
   const [magicSent, setMagicSent] = useState(false)
 
+  const [loginError, setLoginError] = useState('')
+
   const seConnecter = async () => {
     if (!email) return
+    setLoginError('')
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: `${window.location.origin}/bibliotheque` }
     })
-    if (!error) setMagicSent(true)
+    if (error) {
+      setLoginError(error.message)
+    } else {
+      setMagicSent(true)
+    }
   }
 
   const seDeconnecter = async () => {
@@ -145,6 +152,11 @@ export default function Bibliotheque() {
               onClick={seConnecter} disabled={!email}>
               <i className="ti ti-send" /> Recevoir le lien de connexion
             </button>
+            {loginError && (
+              <div style={{ marginTop: 10, padding: '8px 12px', background: '#FEF2F2', border: '0.5px solid #FCA5A5', borderRadius: 6, fontSize: 12, color: '#991B1B' }}>
+                {loginError}
+              </div>
+            )}
             <p style={{ fontSize: 11, color: 'var(--g400)', marginTop: 10, textAlign: 'center', lineHeight: 1.5 }}>
               Un lien magique sera envoyé à ton adresse.<br/>Pas de mot de passe à retenir.
             </p>
