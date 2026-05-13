@@ -239,7 +239,7 @@ function GenScreen({ progress, stepIdx }) {
   )
 }
 
-function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword }) {
+function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword, saveConfirm, setSaveConfirm }) {
   const [tab, setTab] = useState('fiche')
   const [fiche, setFiche] = useState(data.fiche)
   const [analyse, setAnalyse] = useState(data.analyse)
@@ -254,6 +254,12 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
   const upT = (mi, v) => setAnalyse(a => a.map((m, i) => i === mi ? { ...m, transition: v } : m))
 
   const exportPDF = async () => {
+    // Si non connecté, afficher modal de connexion
+    if (!user) {
+      setShowLoginModal(true)
+      return
+    }
+
     const mvts = (fiche.mouvements || []).map(m =>
       `<div style="margin-bottom:6px">
         <div style="font-size:11px;font-weight:bold">Mvt ${m.numero} · L. ${m.lignes}</div>
@@ -297,59 +303,47 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'DM Sans',sans-serif; font-size:12px; color:#111; background:#fff; padding:20px; }
   .page { max-width:750px; margin:0 auto; }
-
-  /* PAGE 1 — FICHE */
-  .template-grid {
-    display:grid;
-    grid-template-columns:200px 1fr;
-    grid-template-rows:auto auto;
-    gap:0;
-    border:1.5px solid #111;
-  }
+  .template-grid { display:grid; grid-template-columns:200px 1fr; gap:0; border:1.5px solid #111; }
   .cell { border:1px solid #111; padding:10px 12px; }
-  .carte { grid-row: 1; grid-column: 1; }
-  .intro-section { grid-row: 1; grid-column: 2; display:flex; flex-direction:column; }
-  .mouv-cell { grid-row: 2; grid-column: 1; }
-  .concl-section { grid-row: 2; grid-column: 2; }
-
-  .section-title { font-size:22px; font-weight:800; text-align:center; padding:10px 0 6px; letter-spacing:-.5px; }
+  .section-title { font-size:22px; font-weight:800; text-align:center; padding:10px 0 6px; }
   .block-title { font-size:11px; font-weight:600; margin-bottom:6px; }
   .field { margin-bottom:5px; font-size:11px; }
-  .field span { font-weight:500; }
-  .inner-block { border:1px solid #111; padding:8px 10px; margin-bottom:0; flex:1; }
+  .inner-block { border:1px solid #111; padding:8px 10px; flex:1; }
   .concl-grid { display:grid; grid-template-columns:1fr 1fr; }
   .concl-block { border:1px solid #111; padding:8px 10px; min-height:100px; }
   .content-text { font-size:11px; line-height:1.6; margin-top:4px; }
-
-  /* PAGE 2 — ANALYSE */
   .page-break { page-break-before:always; padding-top:10px; }
   .analyse-title { font-family:'Spectral',serif; font-size:18px; font-weight:600; margin-bottom:16px; padding-bottom:6px; border-bottom:1.5px solid #185FA5; color:#185FA5; }
-
+  .actions-bar { position:fixed; top:0; left:0; right:0; background:#185FA5; padding:10px 20px; display:flex; gap:10px; align-items:center; z-index:100; }
+  .action-btn { padding:7px 16px; border-radius:6px; border:none; cursor:pointer; font-size:13px; font-weight:500; font-family:inherit; }
+  .btn-white { background:#fff; color:#185FA5; }
+  .btn-outline { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.5); }
+  .action-title { color:#fff; font-size:13px; font-weight:500; margin-right:auto; }
   @media print {
     @page { margin:1.2cm; size:A4; }
     body { padding:0; }
+    .actions-bar { display:none !important; }
     .page-break { page-break-before:always; }
   }
 </style>
 </head>
 <body>
-<div class="page">
-
-  <!-- PAGE 1 : FICHE DE RÉVISION -->
+<div class="actions-bar">
+  <span class="action-title">${fiche.titre} — ${fiche.auteur}</span>
+  <button class="action-btn btn-white" onclick="window.print()">🖨 Imprimer</button>
+  <button class="action-btn btn-outline" onclick="window.close()">✕ Fermer</button>
+</div>
+<div class="page" style="margin-top:50px">
   <div class="template-grid">
-
-    <!-- Colonne gauche haut : Carte d'identité -->
-    <div class="cell carte">
+    <div class="cell">
       <div class="block-title">Carte idd de l'oeuvre :</div>
-      <div class="field">Titre : <span>${fiche.titre||''}</span></div>
-      <div class="field">Auteur : <span>${fiche.auteur||''}</span></div>
-      <div class="field">Date : <span>${fiche.date||''}</span></div>
-      <div class="field">Genre littéraire : <span>${fiche.genre||''}</span></div>
-      <div class="field">Mouvement littéraire : <span>${fiche.mouvement||''}</span></div>
-      <div class="field">Parcours associé : <span>${fiche.parcours||''}</span></div>
+      <div class="field">Titre : <strong>${fiche.titre||''}</strong></div>
+      <div class="field">Auteur : <strong>${fiche.auteur||''}</strong></div>
+      <div class="field">Date : <strong>${fiche.date||''}</strong></div>
+      <div class="field">Genre littéraire : <strong>${fiche.genre||''}</strong></div>
+      <div class="field">Mouvement littéraire : <strong>${fiche.mouvement||''}</strong></div>
+      <div class="field">Parcours associé : <strong>${fiche.parcours||''}</strong></div>
     </div>
-
-    <!-- Colonne droite haut : Introduction -->
     <div style="border:1px solid #111">
       <div class="section-title">Introduction :</div>
       <div style="display:flex;flex-direction:column">
@@ -367,14 +361,10 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
         </div>
       </div>
     </div>
-
-    <!-- Colonne gauche bas : Mouvements -->
-    <div class="cell mouv-cell">
+    <div class="cell">
       <div class="block-title">Mouvement :</div>
       ${mvts}
     </div>
-
-    <!-- Colonne droite bas : Conclusion -->
     <div style="border:1px solid #111">
       <div class="section-title">Conclusion :</div>
       <div class="concl-grid">
@@ -388,45 +378,40 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
         </div>
       </div>
     </div>
-
   </div>
-
-  <!-- PAGE 2 : ANALYSE DÉVELOPPÉE -->
   <div class="page-break">
     <div class="analyse-title">Analyse linéaire développée — ${fiche.titre} · ${fiche.auteur}</div>
     ${analyseSections}
   </div>
-
 </div>
-<script>window.onload = () => { window.print(); }</script>
 </body>
 </html>`
 
+    // Sauvegarder dans Supabase Storage
+    try {
+      const pdfBlob = new Blob([html], { type: 'text/html' })
+      const date = new Date().toISOString().slice(0, 10)
+      const filename = (fiche.titre + '_' + date + '.html').replace(/[^a-zA-Z0-9._-]/g, '_')
+      const formData = new FormData()
+      formData.append('file', pdfBlob, filename)
+      formData.append('userId', user.id)
+      formData.append('oeuvre', fiche.titre || 'Sans_titre')
+      formData.append('filename', filename)
+      const res = await fetch('/api/storage', { method: 'POST', body: formData })
+      if (res.ok) {
+        // Afficher confirmation
+        setSaveConfirm(true)
+        setTimeout(() => setSaveConfirm(false), 3000)
+      }
+    } catch(e) {
+      console.error('Erreur sauvegarde:', e)
+    }
+
+    // Ouvrir dans un nouvel onglet
     const blob = new Blob([html], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
     window.open(url, '_blank')
     setTimeout(() => URL.revokeObjectURL(url), 10000)
-
-    // Upload vers Supabase si connecté, sinon proposer connexion
-    if (!user) {
-      setShowLoginModal(true)
-      return
-    }
-    if (user) {
-      try {
-        const pdfBlob = new Blob([html], { type: 'application/pdf' })
-        const date = new Date().toISOString().slice(0, 10)
-        const filename = `${fiche.titre}_${date}.pdf`.replace(/[^a-zA-Z0-9\u00C0-\u024F._-]/g, '_')
-        const formData = new FormData()
-        formData.append('file', pdfBlob, filename)
-        formData.append('userId', user.id)
-        formData.append('oeuvre', fiche.titre || 'Sans_titre')
-        formData.append('filename', filename)
-        await fetch('/api/storage', { method: 'POST', body: formData })
-      } catch(e) {
-        console.error('Erreur sauvegarde:', e)
-      }
-    }
   }
 
   return (
@@ -508,6 +493,11 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
       </nav>
 
       <div className="rhint"><i className="ti ti-edit" style={{ fontSize: 12 }} /> Clique sur n'importe quel bloc pour modifier.</div>
+      {saveConfirm && (
+        <div style={{ padding:'8px 20px', background:'#D1FAE5', borderBottom:'0.5px solid #6EE7B7', fontSize:12, color:'#065F46', display:'flex', alignItems:'center', gap:6 }}>
+          <i className="ti ti-circle-check" style={{ fontSize:14 }} /> Analyse sauvegardée dans ta bibliothèque !
+        </div>
+      )}
 
       <div className="rtabs">
         <div className={`rtab${tab === 'fiche' ? ' active' : ''}`} onClick={() => setTab('fiche')}>Fiche de révision</div>
@@ -620,6 +610,7 @@ export default function Page() {
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [loginIsSignup, setLoginIsSignup] = useState(false)
+  const [saveConfirm, setSaveConfirm] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -714,6 +705,7 @@ export default function Page() {
       loginError={loginError} setLoginError={setLoginError}
       loginIsSignup={loginIsSignup} setLoginIsSignup={setLoginIsSignup}
       loginWithPassword={loginWithPassword}
+      saveConfirm={saveConfirm} setSaveConfirm={setSaveConfirm}
     />
   }
 
