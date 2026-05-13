@@ -149,7 +149,7 @@ export default function Bibliotheque() {
           </button>
           <button onClick={() => { setIsSignup(!isSignup); setAuthError('') }}
             style={{ width:'100%', marginTop:8, padding:'8px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)' }}>
-            {isSignup ? 'Déjà un compte ? Se connecter' : 'Pas encore de compte ? S&apos;inscrire'}
+            {isSignup ? 'Déjà un compte ? Se connecter' : 'Pas encore de compte ? S’inscrire'}
           </button>
           <div style={{ borderTop:'0.5px solid var(--g100)', marginTop:14, paddingTop:14, textAlign:'center' }}>
             <a href="/" style={{ fontSize:12, color:'var(--g400)', textDecoration:'none' }}>
