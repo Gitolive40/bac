@@ -89,7 +89,7 @@ export default function Bibliotheque() {
     if (!email) return
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      options: { emailRedirectTo: `${window.location.origin}/bibliotheque` }
     })
     if (!error) setMagicSent(true)
   }
