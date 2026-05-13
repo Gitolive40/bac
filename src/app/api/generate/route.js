@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+export const maxDuration = 60;
 
 const SYS = `Reponds UNIQUEMENT avec du JSON brut valide. Pas de texte. Pas de commentaires. Pas de markdown. Commence par { et termine par }.`;
 
