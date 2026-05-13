@@ -239,7 +239,7 @@ function GenScreen({ progress, stepIdx }) {
   )
 }
 
-function ResultScreen({ data, onRestart }) {
+function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginSent, setLoginSent, sendMagicLink }) {
   const [tab, setTab] = useState('fiche')
   const [fiche, setFiche] = useState(data.fiche)
   const [analyse, setAnalyse] = useState(data.analyse)
@@ -614,9 +614,6 @@ export default function Page() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [user, setUser] = useState(null)
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const [loginEmail, setLoginEmail] = useState('')
-  const [loginSent, setLoginSent] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -694,7 +691,13 @@ export default function Page() {
   }
 
   if (screen === 'result' && result) {
-    return <ResultScreen data={result} onRestart={() => { setScreen('home'); setResult(null) }} />
+    return <ResultScreen data={result} onRestart={() => { setScreen('home'); setResult(null) }}
+      user={user}
+      showLoginModal={showLoginModal} setShowLoginModal={setShowLoginModal}
+      loginEmail={loginEmail} setLoginEmail={setLoginEmail}
+      loginSent={loginSent} setLoginSent={setLoginSent}
+      sendMagicLink={sendMagicLink}
+    />
   }
 
   return (
