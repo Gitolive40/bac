@@ -147,13 +147,12 @@ function HomeScreen({ onGenerate }) {
   return (
     <div className="home fu">
       {/* Hero */}
-      <div className="hero">
+      <div className="hero" style={{ marginBottom: 24 }}>
         <div className="hero-badge">
           <i className="ti ti-school" />
           Bac de français
         </div>
-        <h1 className="h1">Génère ton analyse<br />linéaire en quelques<br />secondes</h1>
-        <p className="hsub" style={{ marginTop: 10 }}>
+        <p className="hsub" style={{ marginTop: 8, fontSize: 15 }}>
           Importe ton texte et tes notes —<br />l'IA génère la fiche complète.
         </p>
       </div>
@@ -408,7 +407,11 @@ function ResultScreen({ data, onRestart }) {
     window.open(url, '_blank')
     setTimeout(() => URL.revokeObjectURL(url), 10000)
 
-    // Upload vers Supabase si connecté
+    // Upload vers Supabase si connecté, sinon proposer connexion
+    if (!user) {
+      setShowLoginModal(true)
+      return
+    }
     if (user) {
       try {
         const pdfBlob = new Blob([html], { type: 'application/pdf' })
@@ -428,13 +431,78 @@ function ResultScreen({ data, onRestart }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+      {/* Modal connexion */}
+      {showLoginModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 28, maxWidth: 380, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, background: 'var(--b600)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <i className="ti ti-folder" style={{ fontSize: 18, color: '#fff' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Sauvegarder l'analyse</div>
+                  <div style={{ fontSize: 11, color: 'var(--g400)' }}>Connecte-toi pour accéder à ta bibliothèque</div>
+                </div>
+              </div>
+              <button onClick={() => { setShowLoginModal(false); setLoginSent(false); setLoginEmail('') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--g400)', fontSize: 20 }}>
+                <i className="ti ti-x" />
+              </button>
+            </div>
+
+            {loginSent ? (
+              <div style={{ background: 'var(--b50)', border: '0.5px solid var(--b100)', borderRadius: 10, padding: 16, textAlign: 'center' }}>
+                <i className="ti ti-mail-check" style={{ fontSize: 32, color: 'var(--b600)', display: 'block', marginBottom: 8 }} />
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Lien envoyé !</div>
+                <div style={{ fontSize: 12, color: 'var(--g400)' }}>Vérifie ta boîte mail <strong>{loginEmail}</strong> et clique sur le lien pour te connecter.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, color: 'var(--g600)', marginBottom: 12 }}>
+                  Entre ton email pour recevoir un lien de connexion — pas de mot de passe.
+                </div>
+                <input
+                  type="email"
+                  placeholder="ton@email.com"
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendMagicLink()}
+                  style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--g200)', borderRadius: 8, fontSize: 13, marginBottom: 10, fontFamily: 'inherit', outline: 'none' }}
+                  autoFocus
+                />
+                <button className="btn btn-p" style={{ width: '100%', justifyContent: 'center', padding: '11px', fontSize: 13 }}
+                  onClick={sendMagicLink} disabled={!loginEmail}>
+                  <i className="ti ti-send" /> Recevoir le lien
+                </button>
+                <button onClick={() => setShowLoginModal(false)}
+                  style={{ width: '100%', marginTop: 8, padding: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--g400)' }}>
+                  Continuer sans sauvegarder
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <nav className="nav">
         <div className="nav-logo">
-          <div className="nav-mark"><i className="ti ti-feather" /></div>
+          <div className="nav-mark">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <rect x="2" y="1" width="10" height="13" rx="1.5" fill="white" opacity="0.9"/>
+              <line x1="4" y1="4" x2="10" y2="4" stroke="#185FA5" strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="4" y1="6.5" x2="10" y2="6.5" stroke="#185FA5" strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="4" y1="9" x2="8" y2="9" stroke="#185FA5" strokeWidth="1.2" strokeLinecap="round"/>
+              <circle cx="13" cy="13" r="3.5" stroke="white" strokeWidth="1.5" fill="none"/>
+              <line x1="15.5" y1="15.5" x2="17" y2="17" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
           Linéaire
         </div>
         <div className="nav-actions">
           <button className="btn" onClick={onRestart}><i className="ti ti-refresh" />Recommencer</button>
+          <a href="/bibliotheque" className="btn"><i className="ti ti-folder" />Ma bibliothèque</a>
           <button className="btn btn-p" onClick={exportPDF}><i className="ti ti-download" />Exporter PDF</button>
         </div>
       </nav>
@@ -547,6 +615,9 @@ export default function Page() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [user, setUser] = useState(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginSent, setLoginSent] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -560,6 +631,15 @@ export default function Page() {
   const seDeconnecter = async () => {
     await supabase.auth.signOut()
     setUser(null)
+  }
+
+  const sendMagicLink = async () => {
+    if (!loginEmail) return
+    const { error } = await supabase.auth.signInWithOtp({
+      email: loginEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+    })
+    if (!error) setLoginSent(true)
   }
 
   const handleGenerate = async (texteFile, notesFiles) => {
@@ -606,7 +686,16 @@ export default function Page() {
     <div>
       <nav className="nav">
         <div className="nav-logo">
-          <div className="nav-mark"><i className="ti ti-feather" /></div>
+          <div className="nav-mark">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <rect x="2" y="1" width="10" height="13" rx="1.5" fill="white" opacity="0.9"/>
+              <line x1="4" y1="4" x2="10" y2="4" stroke="#185FA5" strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="4" y1="6.5" x2="10" y2="6.5" stroke="#185FA5" strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="4" y1="9" x2="8" y2="9" stroke="#185FA5" strokeWidth="1.2" strokeLinecap="round"/>
+              <circle cx="13" cy="13" r="3.5" stroke="white" strokeWidth="1.5" fill="none"/>
+              <line x1="15.5" y1="15.5" x2="17" y2="17" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
           Linéaire
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
