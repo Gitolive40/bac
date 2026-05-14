@@ -485,9 +485,9 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
 
 // Sauvegarder dans Supabase Storage
     try {
-      const pdfBlob = new Blob([html], { type: 'text/html' })
+      const pdfBlob = new Blob([html], { type: 'application/pdf' })
       const date = new Date().toISOString().slice(0, 10)
-      const filename = (fiche.titre + '_' + date + '.html').replace(/[^a-zA-Z0-9._-]/g, '_')
+      const filename = (fiche.titre + '_' + date + '.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
       const formData = new FormData()
       formData.append('file', pdfBlob, filename)
       formData.append('userId', user.id)
