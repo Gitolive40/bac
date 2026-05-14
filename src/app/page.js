@@ -306,31 +306,29 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
 
   /* PAGE 1 — FICHE */
   .page1 {
-    width:210mm; min-height:297mm;
-    padding:15mm 15mm 10mm;
-    display:flex; flex-direction:column;
+    width:210mm;
+    padding:10mm 12mm;
   }
   .template-grid {
     display:grid;
-    grid-template-columns:55mm 1fr;
+    grid-template-columns:52mm 1fr;
     border:1px solid #111;
-    flex:1;
   }
-  .col-left { border-right:1px solid #111; display:flex; flex-direction:column; }
-  .col-right { display:flex; flex-direction:column; }
-  .cell { padding:8px 10px; border-bottom:1px solid #111; }
-  .cell:last-child { border-bottom:none; flex:1; }
+  .col-left { border-right:1px solid #111; }
+  .col-right { }
+  .cell { padding:6px 8px; border-bottom:1px solid #111; }
+  .cell:last-child { border-bottom:none; }
   .block-title { font-size:10px; font-weight:700; margin-bottom:5px; }
-  .field { margin-bottom:4px; font-size:10px; line-height:1.4; }
-  .section-title { font-size:18px; font-weight:800; text-align:center; padding:6px 0; border-bottom:1px solid #111; }
-  .inner-block { padding:8px 10px; border-bottom:1px solid #111; flex:1; }
+  .field { margin-bottom:3px; font-size:10px; line-height:1.4; }
+  .section-title { font-size:16px; font-weight:800; text-align:center; padding:5px 0; border-bottom:1px solid #111; }
+  .inner-block { padding:6px 8px; border-bottom:1px solid #111; }
   .inner-block:last-child { border-bottom:none; }
   .content-text { font-size:10px; line-height:1.5; margin-top:3px; }
-  .concl-row { display:grid; grid-template-columns:1fr 1fr; flex:1; }
-  .concl-cell { padding:8px 10px; }
+  .concl-row { display:grid; grid-template-columns:1fr 1fr; }
+  .concl-cell { padding:6px 8px; }
   .concl-cell:first-child { border-right:1px solid #111; }
-  .mouv-item { margin-bottom:6px; padding-bottom:6px; border-bottom:0.5px solid #ddd; }
-  .mouv-item:last-child { border-bottom:none; }
+  .mouv-item { margin-bottom:5px; padding-bottom:5px; border-bottom:0.5px solid #ddd; }
+  .mouv-item:last-child { border-bottom:none; margin-bottom:0; }
   .mouv-num { font-size:9px; font-weight:700; color:#185FA5; }
   .mouv-titre { font-size:10px; font-weight:600; }
   .mouv-resume { font-size:9px; color:#555; line-height:1.4; margin-top:2px; }
@@ -366,9 +364,11 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
   @media print {
     @page { size:A4; margin:0; }
     body { margin:0; }
-    .page1 { page-break-after:always; }
+    .page1 { page-break-after:always; height:297mm; overflow:hidden; }
     .page2 { page-break-before:always; }
     .no-print { display:none !important; }
+    .actions-bar { display:none !important; }
+    .content-wrap { margin-top:0 !important; }
   }
 
   /* BARRE ACTIONS */
