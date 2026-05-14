@@ -297,97 +297,193 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Analyse linéaire — ${fiche.titre}</title>
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'DM Sans',sans-serif; font-size:12px; color:#111; background:#fff; padding:20px; }
-  .page { max-width:750px; margin:0 auto; }
-  .template-grid { display:grid; grid-template-columns:200px 1fr; gap:0; border:1.5px solid #111; }
-  .cell { border:1px solid #111; padding:10px 12px; }
-  .section-title { font-size:22px; font-weight:800; text-align:center; padding:10px 0 6px; }
-  .block-title { font-size:11px; font-weight:600; margin-bottom:6px; }
-  .field { margin-bottom:5px; font-size:11px; }
-  .inner-block { border:1px solid #111; padding:8px 10px; flex:1; }
-  .concl-grid { display:grid; grid-template-columns:1fr 1fr; }
-  .concl-block { border:1px solid #111; padding:8px 10px; min-height:100px; }
-  .content-text { font-size:11px; line-height:1.6; margin-top:4px; }
-  .page-break { page-break-before:always; padding-top:10px; }
-  .analyse-title { font-family:'Spectral',serif; font-size:18px; font-weight:600; margin-bottom:16px; padding-bottom:6px; border-bottom:1.5px solid #185FA5; color:#185FA5; }
-  .actions-bar { position:fixed; top:0; left:0; right:0; background:#185FA5; padding:10px 20px; display:flex; gap:10px; align-items:center; z-index:100; }
-  .action-btn { padding:7px 16px; border-radius:6px; border:none; cursor:pointer; font-size:13px; font-weight:500; font-family:inherit; }
+  body { font-family:'DM Sans',sans-serif; font-size:11px; color:#111; background:#fff; }
+
+  /* PAGE 1 — FICHE */
+  .page1 {
+    width:210mm; min-height:297mm;
+    padding:15mm 15mm 10mm;
+    display:flex; flex-direction:column;
+  }
+  .template-grid {
+    display:grid;
+    grid-template-columns:55mm 1fr;
+    border:1px solid #111;
+    flex:1;
+  }
+  .col-left { border-right:1px solid #111; display:flex; flex-direction:column; }
+  .col-right { display:flex; flex-direction:column; }
+  .cell { padding:8px 10px; border-bottom:1px solid #111; }
+  .cell:last-child { border-bottom:none; flex:1; }
+  .block-title { font-size:10px; font-weight:700; margin-bottom:5px; }
+  .field { margin-bottom:4px; font-size:10px; line-height:1.4; }
+  .section-title { font-size:18px; font-weight:800; text-align:center; padding:6px 0; border-bottom:1px solid #111; }
+  .inner-block { padding:8px 10px; border-bottom:1px solid #111; flex:1; }
+  .inner-block:last-child { border-bottom:none; }
+  .content-text { font-size:10px; line-height:1.5; margin-top:3px; }
+  .concl-row { display:grid; grid-template-columns:1fr 1fr; flex:1; }
+  .concl-cell { padding:8px 10px; }
+  .concl-cell:first-child { border-right:1px solid #111; }
+  .mouv-item { margin-bottom:6px; padding-bottom:6px; border-bottom:0.5px solid #ddd; }
+  .mouv-item:last-child { border-bottom:none; }
+  .mouv-num { font-size:9px; font-weight:700; color:#185FA5; }
+  .mouv-titre { font-size:10px; font-weight:600; }
+  .mouv-resume { font-size:9px; color:#555; line-height:1.4; margin-top:2px; }
+
+  /* PAGE 2 — ANALYSE */
+  .page2 {
+    width:210mm; min-height:297mm;
+    padding:12mm 15mm 10mm;
+  }
+  .analyse-title {
+    font-family:'Spectral',serif; font-size:14px; font-weight:700;
+    color:#185FA5; border-bottom:2px solid #185FA5;
+    padding-bottom:5px; margin-bottom:10px;
+  }
+  .mouv-section { margin-bottom:10px; break-inside:avoid; }
+  .mouv-head {
+    background:#185FA5; color:#fff; padding:5px 10px;
+    display:flex; align-items:center; gap:8px;
+    border-radius:3px 3px 0 0;
+  }
+  .mouv-head-num { font-size:9px; background:rgba(255,255,255,.25); padding:1px 6px; border-radius:3px; }
+  .mouv-head-title { font-size:10px; font-style:italic; font-family:'Spectral',serif; }
+  .mouv-head-lines { font-size:9px; opacity:.75; margin-left:auto; }
+  table { width:100%; border-collapse:collapse; border:0.5px solid #ccc; }
+  td { padding:5px 8px; border:0.5px solid #ccc; vertical-align:top; font-size:10px; line-height:1.5; }
+  td:first-child { width:35%; }
+  .vers-ref { font-size:9px; font-weight:700; color:#185FA5; margin-bottom:3px; }
+  .vers-quote { font-style:italic; color:#555; border-left:2px solid #B5D4F4; padding-left:5px; font-size:10px; }
+  .procede { display:inline-block; font-size:8px; background:#E6F1FB; color:#0C447C; border-radius:3px; padding:1px 4px; margin:1px 2px 2px 0; }
+  .transition { background:#E6F1FB; padding:5px 10px; font-size:9px; font-style:italic; color:#0C447C; border:0.5px solid #B5D4F4; border-top:none; }
+
+  /* IMPRESSION */
+  @media print {
+    @page { size:A4; margin:0; }
+    body { margin:0; }
+    .page1 { page-break-after:always; }
+    .page2 { page-break-before:always; }
+    .no-print { display:none !important; }
+  }
+
+  /* BARRE ACTIONS */
+  .actions-bar {
+    position:fixed; top:0; left:0; right:0;
+    background:#185FA5; padding:8px 16px;
+    display:flex; gap:10px; align-items:center;
+    z-index:1000; font-family:'DM Sans',sans-serif;
+  }
+  .action-btn { padding:6px 14px; border-radius:6px; border:none; cursor:pointer; font-size:12px; font-weight:500; font-family:inherit; }
   .btn-white { background:#fff; color:#185FA5; }
   .btn-outline { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.5); }
-  .action-title { color:#fff; font-size:13px; font-weight:500; margin-right:auto; }
-  @media print {
-    @page { margin:1.2cm; size:A4; }
-    body { padding:0; }
-    .actions-bar { display:none !important; }
-    .page-break { page-break-before:always; }
+  .action-title { color:#fff; font-size:12px; font-weight:500; margin-right:auto; }
+  .content-wrap { margin-top:44px; }
+
+  @media screen {
+    body { background:#e5e5e5; }
+    .page1, .page2 { background:#fff; margin:16px auto; box-shadow:0 2px 12px rgba(0,0,0,.15); }
   }
 </style>
 </head>
 <body>
-<div class="actions-bar">
+
+<div class="actions-bar no-print">
   <span class="action-title">${fiche.titre} — ${fiche.auteur}</span>
-  <button class="action-btn btn-white" onclick="window.print()">🖨 Imprimer</button>
+  <button class="action-btn btn-white" onclick="window.print()">🖨 Imprimer / PDF</button>
   <button class="action-btn btn-outline" onclick="window.close()">✕ Fermer</button>
 </div>
-<div class="page" style="margin-top:50px">
+
+<div class="content-wrap">
+
+<!-- PAGE 1 : FICHE DE RÉVISION -->
+<div class="page1">
   <div class="template-grid">
-    <div class="cell">
-      <div class="block-title">Carte idd de l'oeuvre :</div>
-      <div class="field">Titre : <strong>${fiche.titre||''}</strong></div>
-      <div class="field">Auteur : <strong>${fiche.auteur||''}</strong></div>
-      <div class="field">Date : <strong>${fiche.date||''}</strong></div>
-      <div class="field">Genre littéraire : <strong>${fiche.genre||''}</strong></div>
-      <div class="field">Mouvement littéraire : <strong>${fiche.mouvement||''}</strong></div>
-      <div class="field">Parcours associé : <strong>${fiche.parcours||''}</strong></div>
-    </div>
-    <div style="border:1px solid #111">
-      <div class="section-title">Introduction :</div>
-      <div style="display:flex;flex-direction:column">
-        <div class="inner-block" style="border-left:none;border-right:none;border-top:1px solid #111;border-bottom:1px solid #111">
-          <div class="block-title">Introduction :</div>
-          <div class="content-text">${fiche.introduction||''}</div>
-        </div>
-        <div class="inner-block" style="border-left:none;border-right:none;border-top:none;border-bottom:1px solid #111">
-          <div class="block-title">Restitution de l'extrait :</div>
-          <div class="content-text">${fiche.restitution||''}</div>
-        </div>
-        <div class="inner-block" style="border-left:none;border-right:none;border-top:none;border-bottom:none">
-          <div class="block-title">Problématique :</div>
-          <div class="content-text">${fiche.problematique||''}</div>
-        </div>
+    <div class="col-left">
+      <div class="cell">
+        <div class="block-title">Carte idd de l'oeuvre :</div>
+        <div class="field">Titre : <strong>${fiche.titre||''}</strong></div>
+        <div class="field">Auteur : <strong>${fiche.auteur||''}</strong></div>
+        <div class="field">Date : <strong>${fiche.date||''}</strong></div>
+        <div class="field">Genre : <strong>${fiche.genre||''}</strong></div>
+        <div class="field">Mouvement : <strong>${fiche.mouvement||''}</strong></div>
+        <div class="field">Parcours : <strong>${fiche.parcours||''}</strong></div>
+      </div>
+      <div class="cell" style="flex:1">
+        <div class="block-title">Mouvements :</div>
+        ${(fiche.mouvements||[]).map(m => `
+          <div class="mouv-item">
+            <div class="mouv-num">Mvt ${m.numero} · L. ${m.lignes}</div>
+            <div class="mouv-titre">${m.titre||''}</div>
+            <div class="mouv-resume">${m.resume||''}</div>
+          </div>`).join('')}
       </div>
     </div>
-    <div class="cell">
-      <div class="block-title">Mouvement :</div>
-      ${mvts}
-    </div>
-    <div style="border:1px solid #111">
+    <div class="col-right">
+      <div class="section-title">Introduction :</div>
+      <div class="inner-block">
+        <div class="block-title">Introduction :</div>
+        <div class="content-text">${fiche.introduction||''}</div>
+      </div>
+      <div class="inner-block">
+        <div class="block-title">Restitution de l'extrait :</div>
+        <div class="content-text">${fiche.restitution||''}</div>
+      </div>
+      <div class="inner-block">
+        <div class="block-title">Problématique :</div>
+        <div class="content-text">${fiche.problematique||''}</div>
+      </div>
       <div class="section-title">Conclusion :</div>
-      <div class="concl-grid">
-        <div class="concl-block">
+      <div class="concl-row" style="flex:1">
+        <div class="concl-cell">
           <div class="block-title">Réponse a la problématique :</div>
           <div class="content-text">${fiche.reponse||''}</div>
         </div>
-        <div class="concl-block" style="border-left:1px solid #111">
+        <div class="concl-cell">
           <div class="block-title">Ouverture :</div>
           <div class="content-text">${fiche.ouverture||''}</div>
         </div>
       </div>
     </div>
   </div>
-  <div class="page-break">
-    <div class="analyse-title">Analyse linéaire développée — ${fiche.titre} · ${fiche.auteur}</div>
-    ${analyseSections}
-  </div>
+</div>
+
+<!-- PAGE 2 : ANALYSE DÉVELOPPÉE -->
+<div class="page2">
+  <div class="analyse-title">Analyse linéaire — ${fiche.titre} · ${fiche.auteur}</div>
+  ${(analyse||[]).map(mouv => `
+    <div class="mouv-section">
+      <div class="mouv-head">
+        <span class="mouv-head-num">Mouvement ${mouv.numero}</span>
+        <span class="mouv-head-title">${mouv.titre}</span>
+        <span class="mouv-head-lines">V. ${mouv.lignes}</span>
+      </div>
+      <table>
+        ${(mouv.vers||[]).map(v => `
+          <tr>
+            <td>
+              <div class="vers-ref">${v.ref}</div>
+              <div class="vers-quote">${v.texte}</div>
+            </td>
+            <td>
+              <div>${(v.procedes||[]).map(p=>`<span class="procede">${p}</span>`).join('')}</div>
+              <div>${v.analyse}</div>
+            </td>
+          </tr>`).join('')}
+      </table>
+      ${mouv.transition ? `<div class="transition">→ ${mouv.transition}</div>` : ''}
+    </div>`).join('')}
+</div>
+
 </div>
 </body>
 </html>`
 
-    // Sauvegarder dans Supabase Storage
+// Sauvegarder dans Supabase Storage
     try {
       const pdfBlob = new Blob([html], { type: 'text/html' })
       const date = new Date().toISOString().slice(0, 10)
@@ -407,11 +503,7 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
       console.error('Erreur sauvegarde:', e)
     }
 
-    // Ouvrir dans un nouvel onglet
-    const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    window.open(url, '_blank')
-    setTimeout(() => URL.revokeObjectURL(url), 10000)
+    // Plus d'ouverture automatique — uniquement sauvegarde dans la bibliothèque
   }
 
   return (
@@ -488,7 +580,9 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
         <div className="nav-actions">
           <button className="btn" onClick={onRestart}><i className="ti ti-refresh" />Recommencer</button>
           <a href="/bibliotheque" className="btn"><i className="ti ti-folder" />Ma bibliothèque</a>
-          <button className="btn btn-p" onClick={exportPDF}><i className="ti ti-download" />Exporter PDF</button>
+          <button className="btn btn-p" onClick={exportPDF} title="Ajouter dans ma bibliothèque" style={{padding:'8px 16px'}}>
+            <i className="ti ti-folder-plus" style={{fontSize:24}} />
+          </button>
         </div>
       </nav>
 
