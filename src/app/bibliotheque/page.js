@@ -67,27 +67,10 @@ export default function Bibliotheque() {
     setFichiers(data || [])
   }
 
-  const telecharger = async (nomFichier) => {
-    // Utiliser une URL signée — fonctionne sur mobile et desktop
-    const { data, error } = await supabase.storage
-      .from('analyses')
-      .createSignedUrl(`${user.id}/${dossierOuvert}/${nomFichier}`, 3600)
-    if (error || !data?.signedUrl) { alert('Erreur lors de l ouverture'); return }
-    
-    // Fetch le contenu et ouvrir comme HTML
-    const res = await fetch(data.signedUrl)
-    const text = await res.text()
-    const blob = new Blob([text], { type: 'text/html;charset=utf-8' })
-    const blobUrl = URL.createObjectURL(blob)
-    
-    // Sur mobile : utiliser location.href plutôt que window.open
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-    if (isMobile) {
-      window.location.href = blobUrl
-    } else {
-      window.open(blobUrl, '_blank')
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
-    }
+  const telecharger = (nomFichier) => {
+    // Ouvrir via la page viewer de l'app — fonctionne sur tous les appareils
+    const path = encodeURIComponent(`${user.id}/${dossierOuvert}/${nomFichier}`)
+    window.open(`/viewer?path=${path}`, '_blank')
   }
 
   const telechargerFichier = async (nomFichier) => {
