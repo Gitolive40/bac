@@ -68,31 +68,40 @@ export default function Bibliotheque() {
   }
 
   const telecharger = async (nomFichier) => {
-    // Télécharger le contenu du fichier
+    // Utiliser une URL signée — fonctionne sur mobile et desktop
     const { data, error } = await supabase.storage
       .from('analyses')
-      .download(`${user.id}/${dossierOuvert}/${nomFichier}`)
-    if (error || !data) { alert('Erreur lors de l ouverture du fichier'); return }
+      .createSignedUrl(`${user.id}/${dossierOuvert}/${nomFichier}`, 3600)
+    if (error || !data?.signedUrl) { alert('Erreur lors de l ouverture'); return }
     
-    const text = await data.text()
-    const blob = new Blob([text], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    window.open(url, '_blank')
-    setTimeout(() => URL.revokeObjectURL(url), 10000)
+    // Fetch le contenu et ouvrir comme HTML
+    const res = await fetch(data.signedUrl)
+    const text = await res.text()
+    const blob = new Blob([text], { type: 'text/html;charset=utf-8' })
+    const blobUrl = URL.createObjectURL(blob)
+    
+    // Sur mobile : utiliser location.href plutôt que window.open
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    if (isMobile) {
+      window.location.href = blobUrl
+    } else {
+      window.open(blobUrl, '_blank')
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+    }
   }
 
   const telechargerFichier = async (nomFichier) => {
     const { data, error } = await supabase.storage
       .from('analyses')
-      .download(`${user.id}/${dossierOuvert}/${nomFichier}`)
-    if (error || !data) { alert('Erreur lors du téléchargement'); return }
+      .createSignedUrl(`${user.id}/${dossierOuvert}/${nomFichier}`, 3600)
+    if (error || !data?.signedUrl) { alert('Erreur lors du téléchargement'); return }
     
-    const url = URL.createObjectURL(data)
     const a = document.createElement('a')
-    a.href = url
+    a.href = data.signedUrl
     a.download = nomFichier
+    document.body.appendChild(a)
     a.click()
-    setTimeout(() => URL.revokeObjectURL(url), 5000)
+    document.body.removeChild(a)
   }
 
   const supprimer = async (nomFichier) => {
