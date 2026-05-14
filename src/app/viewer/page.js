@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-client'
 
-export default function Viewer({ params, searchParams }) {
+export default function Viewer() {
   const [html, setHtml] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
-    const path = searchParams?.path
+    // Lire le path depuis l'URL côté client
+    const urlParams = new URLSearchParams(window.location.search)
+    const path = urlParams.get('path')
     if (!path) { setError('Fichier non trouvé'); setLoading(false); return }
 
     const load = async () => {
