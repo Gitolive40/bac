@@ -483,9 +483,22 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
 </body>
 </html>`
 
-// Sauvegarder dans Supabase Storage
+// Générer un vrai PDF via PDFShift puis sauvegarder dans Supabase
     try {
-      const pdfBlob = new Blob([html], { type: 'application/pdf' })
+      // 1. Générer le PDF
+      const pdfRes = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html })
+      })
+      if (!pdfRes.ok) {
+        const err = await pdfRes.json().catch(() => ({}))
+        throw new Error(err.error || 'Erreur génération PDF')
+      }
+      const pdfBuffer = await pdfRes.arrayBuffer()
+      const pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' })
+
+      // 2. Sauvegarder dans Supabase
       const date = new Date().toISOString().slice(0, 10)
       const filename = (fiche.titre + '_' + date + '.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
       const formData = new FormData()
@@ -495,15 +508,15 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
       formData.append('filename', filename)
       const res = await fetch('/api/storage', { method: 'POST', body: formData })
       if (res.ok) {
-        // Afficher confirmation
         setSaveConfirm(true)
         setTimeout(() => setSaveConfirm(false), 3000)
       }
     } catch(e) {
-      console.error('Erreur sauvegarde:', e)
+      console.error('Erreur sauvegarde PDF:', e)
+      alert('Erreur : ' + e.message)
     }
 
-    // Plus d'ouverture automatique — uniquement sauvegarde dans la bibliothèque
+    // Sauvegarde uniquement — pas d'ouverture automatique
   }
 
   return (
