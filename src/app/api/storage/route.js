@@ -17,7 +17,14 @@ export async function POST(request) {
     const supabase = createAdminClient()
 
     // Chemin : userId/oeuvre/filename.pdf
-    const safeName = oeuvre.replace(/[^a-zA-Z0-9\u00C0-\u024F\s-]/g, '').trim().replace(/\s+/g, '_')
+    // Supprimer les accents et caractères spéciaux pour le chemin Supabase
+    const safeName = oeuvre
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '_')
+      .slice(0, 50)
     const path = `${userId}/${safeName}/${filename}`
 
     const bytes = await file.arrayBuffer()
