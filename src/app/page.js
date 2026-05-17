@@ -258,6 +258,11 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
     setShowThemeModal(true)
   }
 
+  const exportPDF = () => {
+    if (!user) { setShowLoginModal(true); return }
+    setShowThemeModal(true)
+  }
+
   const doExportPDF = async (theme) => {
     setShowThemeModal(false)
 
@@ -504,25 +509,13 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
       const ts = Date.now()
       const filename = (fiche.titre + '_' + date + '_' + ts + '.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
 
-      // Détecter le thème/genre automatiquement depuis la carte d'identité
-      const genreRaw = (fiche.genre || '').toLowerCase()
-      let theme = 'Divers'
-      if (genreRaw.includes('po') || genreRaw.includes('vers') || genreRaw.includes('sonnet') || genreRaw.includes('lyr')) {
-        theme = 'Poesie'
-      } else if (genreRaw.includes('roman') || genreRaw.includes('nou') || genreRaw.includes('recit') || genreRaw.includes('narr')) {
-        theme = 'Romans'
-      } else if (genreRaw.includes('th') || genreRaw.includes('com') || genreRaw.includes('trag') || genreRaw.includes('drame') || genreRaw.includes('pi')) {
-        theme = 'Theatre'
-      } else if (genreRaw.includes('essai') || genreRaw.includes('id') || genreRaw.includes('phil') || genreRaw.includes('arg') || genreRaw.includes('disc') || genreRaw.includes('débat')) {
-        theme = 'Debat_d_idees'
-      }
-
       const formData = new FormData()
       formData.append('file', pdfBlob, filename)
       formData.append('userId', user.id)
       formData.append('theme', theme)
       formData.append('oeuvre', fiche.titre || 'Sans_titre')
       formData.append('filename', filename)
+      formData.append('jsonData', JSON.stringify({ fiche, analyse }))
       const res = await fetch('/api/storage', { method: 'POST', body: formData })
       if (res.ok) {
         setSaveConfirm(true)
@@ -561,6 +554,38 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
             ))}
             <button onClick={() => setShowThemeModal(false)}
               style={{ width:'100%', marginTop:4, padding:'8px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)' }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal sélection thème */}
+      {showThemeModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20 }}>
+          <div style={{ background:'#fff', borderRadius:16, padding:28, maxWidth:360, width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,.2)' }}>
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:15, fontWeight:600, marginBottom:4 }}>Choisir un dossier</div>
+              <div style={{ fontSize:12, color:'var(--g400)' }}>Dans quel dossier sauvegarder cette analyse ?</div>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {[
+                { key:'Poesie', label:'Poésie', icon:'ti-writing' },
+                { key:'Romans', label:'Romans', icon:'ti-book' },
+                { key:'Theatre', label:'Théâtre', icon:'ti-masks-theater' },
+                { key:'Debat_d_idees', label:'Débat d'idées', icon:'ti-message-dots' },
+                { key:'Divers', label:'Divers', icon:'ti-folder' },
+              ].map(t => (
+                <button key={t.key}
+                  onClick={() => { setShowThemeModal(false); doExportPDF(t.key) }}
+                  style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'var(--g50)', border:'0.5px solid var(--g200)', borderRadius:8, cursor:'pointer', fontSize:14, fontFamily:'inherit', textAlign:'left' }}>
+                  <i className={`ti ${t.icon}`} style={{ fontSize:20, color:'var(--b600)', flexShrink:0 }} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setShowThemeModal(false)}
+              style={{ width:'100%', marginTop:12, padding:'8px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)', fontFamily:'inherit' }}>
               Annuler
             </button>
           </div>
@@ -765,11 +790,27 @@ export default function Page() {
   const [saveConfirm, setSaveConfirm] = useState(false)
   const [showThemeModal, setShowThemeModal] = useState(false)
   const [selectedTheme, setSelectedTheme] = useState('')
+  const [showThemeModal, setShowThemeModal] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
-    // Gérer le code OAuth dans l'URL (redirect depuis Supabase)
+    // Charger une analyse depuis la bibliothèque pour modification
     const params = new URLSearchParams(window.location.search)
+    if (params.get('edit') === '1') {
+      const saved = sessionStorage.getItem('lineaire_edit')
+      if (saved) {
+        try {
+          const data = JSON.parse(saved)
+          sessionStorage.removeItem('lineaire_edit')
+          setResult(data)
+          setScreen('result')
+          window.history.replaceState({}, '', '/')
+        } catch(e) { console.error('Erreur chargement édition:', e) }
+      }
+    }
+
+    // Gérer le code OAuth dans l'URL (redirect depuis Supabase)
     const code = params.get('code')
     if (code) {
       supabase.auth.exchangeCodeForSession(code).then(({ data }) => {
@@ -861,7 +902,7 @@ export default function Page() {
       loginWithPassword={loginWithPassword}
       saveConfirm={saveConfirm} setSaveConfirm={setSaveConfirm}
       showThemeModal={showThemeModal} setShowThemeModal={setShowThemeModal}
-      selectedTheme={selectedTheme} setSelectedTheme={setSelectedTheme}
+      doExportPDF={doExportPDF}
     />
   }
 

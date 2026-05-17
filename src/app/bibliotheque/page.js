@@ -88,6 +88,24 @@ export default function Bibliotheque() {
     window.open(`/viewer?path=${path}`, '_blank')
   }
 
+  const modifier = async (nomFichier) => {
+    // Charger le JSON correspondant au PDF
+    const jsonFilename = nomFichier.replace('.pdf', '.json')
+    const jsonPath = `${user.id}/${themeOuvert}/${dossierOuvert}/${jsonFilename}`
+    const { data, error } = await supabase.storage
+      .from('analyses')
+      .download(jsonPath)
+    if (error || !data) {
+      alert('Données de modification non disponibles pour cette analyse.')
+      return
+    }
+    const text = await data.text()
+    const analysData = JSON.parse(text)
+    // Stocker dans sessionStorage et rediriger vers l'app
+    sessionStorage.setItem('lineaire_edit', JSON.stringify(analysData))
+    window.location.href = '/?edit=1'
+  }
+
   const telechargerFichier = (nomFichier) => {
     const path = encodeURIComponent(`${user.id}/${themeOuvert}/${dossierOuvert}/${nomFichier}`)
     window.open(`/viewer?path=${path}&print=1`, '_blank')
@@ -229,7 +247,8 @@ export default function Bibliotheque() {
                   <span style={{ flex: 1, fontSize: 13, color: 'var(--g800)' }}>{f.name.replace('.pdf', '').replace(/_/g, ' ')}</span>
                   <span style={{ fontSize: 11, color: 'var(--g400)' }}>{new Date(f.created_at).toLocaleDateString('fr-FR')}</span>
                   <button className="btn" onClick={() => telecharger(f.name)} title="Ouvrir"><i className="ti ti-eye" /></button>
-                  <button className="btn" onClick={() => telechargerFichier(f.name)} title="Télécharger"><i className="ti ti-download" /></button>
+                  <button className="btn" onClick={() => modifier(f.name)} title="Modifier"><i className="ti ti-edit" /></button>
+                  <button className="btn" onClick={() => telechargerFichier(f.name)} title="Imprimer/PDF"><i className="ti ti-printer" /></button>
                   <button className="btn" style={{ color: '#e44', borderColor: '#fca5a5' }} onClick={() => supprimer(f.name)} title="Supprimer"><i className="ti ti-trash" /></button>
                 </div>
               ))}
