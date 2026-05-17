@@ -211,4 +211,83 @@ function HomeScreen({ onGenerate }) {
 function GenScreen({ progress, stepIdx }) {
   const steps = [
     { label: 'Lecture des documents', desc: 'Vision IA sur les deux images', icon: 'eye' },
-    { label: 'Recherche web', desc: 'Auteur, mouvement, parcours bac…',
+    { label: 'Recherche web', desc: 'Auteur, mouvement, parcours bac…', icon: 'world' },
+    { label: "Génération de l'analyse", desc: 'Remplissage des blocs du template…', icon: 'sparkles' },
+    { label: 'Mise en page', desc: 'Application du template final', icon: 'layout-columns' },
+  ]
+  return (
+    <div className="gen fu">
+      <div className="gt">Analyse en cours…</div>
+      <p className="gs">Patiente quelques secondes.</p>
+      <div className="pt"><div className="pf" style={{ width: `${progress}%` }} /></div>
+      <div className="slist">
+        {steps.map((s, i) => {
+          const st = i < stepIdx ? 'done' : i === stepIdx ? 'active' : 'pending'
+          return (
+            <div key={i} className={`si ${st}`}>
+              <div className={`sic ${st}`}>
+                {st === 'done' ? <i className="ti ti-check" /> : st === 'active' ? <span className="spinner" /> : <i className={`ti ti-${s.icon}`} />}
+              </div>
+              <div><div className="sla">{s.label}</div><div className="sde">{s.desc}</div></div>
+              {st !== 'pending' && <span className={`sba ${st}`}>{st === 'done' ? 'Fait' : 'En cours'}</span>}
+            </div>
+          )
+        })}
+      </div>
+      <Stepper step={1} />
+    </div>
+  )
+}
+
+function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword, saveConfirm, setSaveConfirm, showThemeModal, setShowThemeModal }) {
+  const [tab, setTab] = useState('fiche')
+  const [fiche, setFiche] = useState(data.fiche)
+  const [analyse, setAnalyse] = useState(data.analyse)
+
+  const upF = (k, v) => setFiche(f => ({ ...f, [k]: v }))
+  const upM = (i, k, v) => setFiche(f => {
+    const m = [...f.mouvements]; m[i] = { ...m[i], [k]: v }; return { ...f, mouvements: m }
+  })
+  const upV = (mi, vi, k, v) => setAnalyse(a => a.map((m, i) =>
+    i !== mi ? m : { ...m, vers: m.vers.map((vv, j) => j === vi ? { ...vv, [k]: v } : vv) }
+  ))
+  const upT = (mi, v) => setAnalyse(a => a.map((m, i) => i === mi ? { ...m, transition: v } : m))
+
+  const exportPDF = () => {
+    if (!user) { setShowLoginModal(true); return }
+    setShowThemeModal(true)
+  }
+
+  const doExportPDF = async (theme) => {
+    setShowThemeModal(false)
+
+    const mvts = (fiche.mouvements || []).map(m =>
+      `<div style="margin-bottom:6px">
+        <div style="font-size:11px;font-weight:bold">Mvt ${m.numero} · L. ${m.lignes}</div>
+        <div style="font-size:11px;font-weight:600">${m.titre || ''}</div>
+        <div style="font-size:10px">${m.resume || ''}</div>
+      </div>`
+    ).join('')
+
+    const analyseSections = (analyse || []).map(mouv => {
+      const versRows = (mouv.vers || []).map(v =>
+        `<tr>
+          <td style="padding:6px 8px;border:0.5px solid #ccc;vertical-align:top;width:35%">
+            <div style="font-size:10px;font-weight:600;color:#185FA5;margin-bottom:3px">${v.ref}</div>
+            <div style="font-size:11px;font-style:italic;color:#555;border-left:2px solid #B5D4F4;padding-left:6px">${v.texte}</div>
+          </td>
+          <td style="padding:6px 8px;border:0.5px solid #ccc;vertical-align:top">
+            <div style="margin-bottom:4px">${(v.procedes||[]).map(p => `<span style="font-size:9px;background:#E6F1FB;color:#0C447C;border-radius:3px;padding:1px 5px;margin-right:3px">${p}</span>`).join('')}</div>
+            <div style="font-size:11px;line-height:1.6">${v.analyse}</div>
+          </td>
+        </tr>`
+      ).join('')
+      return `
+        <div style="margin-bottom:16px;page-break-inside:avoid">
+          <div style="background:#185FA5;padding:8px 14px;display:flex;align-items:center;gap:10px;border-radius:4px 4px 0 0">
+            <span style="font-size:10px;font-weight:600;background:rgba(255,255,255,.2);color:#fff;padding:2px 7px;border-radius:3px">Mouvement ${mouv.numero}</span>
+            <span style="font-size:12px;font-style:italic;color:#fff;font-family:Georgia,serif">${mouv.titre}</span>
+            <span style="font-size:10px;color:rgba(255,255,255,.7);margin-left:auto">V. ${mouv.lignes}</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;border:0.5px solid #ccc">${versRows}</table>
+          ${mouv.transition ? `<div style="background:#E6F1FB;padding:7px 14px;font-size:11px;font-style:italic;color:#0C447C;border
