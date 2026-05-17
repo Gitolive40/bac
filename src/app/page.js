@@ -140,4 +140,75 @@ function UploadZone({ num, label, sublabel, icon, files, onFiles, multi = false 
 // ─── Écrans ───────────────────────────────────────────────────────────────────
 
 function HomeScreen({ onGenerate }) {
-  const
+  const [texteFiles, setTexteFiles] = useState([])
+  const [notesFiles, setNotesFiles] = useState([])
+  const ready = texteFiles.length > 0 && notesFiles.length > 0
+
+  return (
+    <div className="home fu">
+      {/* Hero */}
+      <div className="hero" style={{ marginBottom: 24 }}>
+        <div className="hero-badge">
+          <i className="ti ti-school" />
+          Bac de français
+        </div>
+        <p className="hsub" style={{ marginTop: 8, fontSize: 15 }}>
+          Importe ton texte et tes notes —<br />l'IA génère la fiche complète.
+        </p>
+      </div>
+
+      {/* Étapes visuelles */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 24, fontSize: 11, color: 'var(--g400)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--b600)', color: '#fff', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>1</div>
+          <span>Importe</span>
+        </div>
+        <i className="ti ti-arrow-right" style={{ fontSize: 12, color: 'var(--g200)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--g100)', color: 'var(--g600)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>2</div>
+          <span>L'IA analyse</span>
+        </div>
+        <i className="ti ti-arrow-right" style={{ fontSize: 12, color: 'var(--g200)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--g100)', color: 'var(--g600)', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>3</div>
+          <span>Ta fiche</span>
+        </div>
+      </div>
+
+      {/* Upload cards */}
+      <div className="ugrid">
+        <UploadZone num="1" icon="file-text" label="Texte littéraire"
+          sublabel="Photo du poème ou de l'extrait" files={texteFiles} onFiles={setTexteFiles} multi={false} />
+        <UploadZone num="2" icon="notebook" label="Notes d'analyse"
+          sublabel="1 ou 2 photos de tes notes" files={notesFiles} onFiles={setNotesFiles} multi={true} />
+      </div>
+
+      {/* Bouton générer */}
+      <div className="btn-generate-wrap">
+        <button className="btn btn-p btn-generate"
+          style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: 15, marginBottom: 4, borderRadius: 8, gap: 10 }}
+          disabled={!ready} onClick={() => onGenerate(texteFiles[0], notesFiles)}>
+          <i className="ti ti-sparkles" style={{ fontSize: 18 }} />
+          {ready ? 'Générer mon analyse' : 'Importe tes 2 documents'}
+        </button>
+      </div>
+
+      {/* Aide */}
+      {!ready && (
+        <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--g400)', marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: texteFiles.length ? '#22c55e' : 'var(--g200)', display: 'inline-block' }} />
+          Texte littéraire
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: notesFiles.length ? '#22c55e' : 'var(--g200)', display: 'inline-block', marginLeft: 8 }} />
+          Notes d'analyse
+        </div>
+      )}
+
+      <Stepper step={0} />
+    </div>
+  )
+}
+
+function GenScreen({ progress, stepIdx }) {
+  const steps = [
+    { label: 'Lecture des documents', desc: 'Vision IA sur les deux images', icon: 'eye' },
+    { label: 'Recherche web', desc: 'Auteur, mouvement, parcours bac…',
