@@ -198,8 +198,25 @@ export default function Bibliotheque() {
 
       {dossierOuvert ? (
         <>
-          <button className="btn" style={{ marginBottom: 20 }} onClick={() => { setDossierOuvert(null); setFichiers([]) }}>
-            <i className="ti ti-arrow-left" /> Retour
+          {/* Fil d'Ariane : Bibliothèque > Thème > Œuvre */}
+          <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:14, fontSize:12, color:'var(--g400)', flexWrap:'wrap' }}>
+            <button onClick={() => { setThemeOuvert(null); setDossierOuvert(null); setFichiers([]); chargerDossiers(user.id) }}
+              style={{ background:'none', border:'none', cursor:'pointer', color:'var(--b600)', fontSize:12, padding:0, display:'flex', alignItems:'center', gap:3 }}>
+              <i className="ti ti-home" style={{ fontSize:12 }} /> Bibliothèque
+            </button>
+            {themeOuvert && <>
+              <i className="ti ti-chevron-right" style={{ fontSize:11 }} />
+              <button onClick={() => { setDossierOuvert(null); setFichiers([]); ouvrirTheme(themeOuvert) }}
+                style={{ background:'none', border:'none', cursor:'pointer', color:'var(--b600)', fontSize:12, padding:0 }}>
+                {themeOuvert.replace(/_/g, ' ')}
+              </button>
+            </>}
+            <i className="ti ti-chevron-right" style={{ fontSize:11 }} />
+            <span style={{ color:'var(--g800)', fontWeight:500 }}>{dossierOuvert.replace(/_/g, ' ')}</span>
+          </div>
+          <button className="btn" style={{ marginBottom:16 }}
+            onClick={() => themeOuvert ? ouvrirTheme(themeOuvert) : (setDossierOuvert(null), setFichiers([]))}>
+            <i className="ti ti-arrow-left" /> {themeOuvert ? themeOuvert.replace(/_/g, ' ') : 'Retour'}
           </button>
           <h2 style={{ fontFamily: 'var(--fd)', fontSize: 16, fontWeight: 500, marginBottom: 16 }}>
             <i className="ti ti-folder-open" style={{ color: 'var(--b600)', marginRight: 8 }} />
@@ -231,6 +248,23 @@ export default function Bibliotheque() {
               <div style={{ fontSize: 12, color: 'var(--g400)' }}>Génère une analyse et clique sur "Exporter PDF" pour la sauvegarder ici.</div>
             </div>
           ) : (
+            <>
+            {themeOuvert && (
+              <>
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:14, fontSize:12, color:'var(--g400)' }}>
+                  <button onClick={() => { setThemeOuvert(null); setDossierOuvert(null); setFichiers([]); chargerDossiers(user.id) }}
+                    style={{ background:'none', border:'none', cursor:'pointer', color:'var(--b600)', fontSize:12, padding:0, display:'flex', alignItems:'center', gap:3 }}>
+                    <i className="ti ti-home" style={{ fontSize:12 }} /> Bibliothèque
+                  </button>
+                  <i className="ti ti-chevron-right" style={{ fontSize:11 }} />
+                  <span style={{ color:'var(--g800)', fontWeight:500 }}>{themeOuvert.replace(/_/g, ' ')}</span>
+                </div>
+                <button className="btn" style={{ marginBottom:16 }}
+                  onClick={() => { setThemeOuvert(null); setDossierOuvert(null); setFichiers([]); chargerDossiers(user.id) }}>
+                  <i className="ti ti-arrow-left" /> Bibliothèque
+                </button>
+              </>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {dossiers.map(d => (
                 <div key={d.name} onClick={() => { if (!themeOuvert) ouvrirTheme(d.name); else ouvrirDossier(d.name) }}
