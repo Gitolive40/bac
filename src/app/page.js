@@ -258,10 +258,6 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
     setShowThemeModal(true)
   }
 
-  const exportPDF = () => {
-    if (!user) { setShowLoginModal(true); return }
-    setShowThemeModal(true)
-  }
 
   const doExportPDF = async (theme) => {
     setShowThemeModal(false)
@@ -788,8 +784,6 @@ export default function Page() {
   const [loginError, setLoginError] = useState('')
   const [loginIsSignup, setLoginIsSignup] = useState(false)
   const [saveConfirm, setSaveConfirm] = useState(false)
-  const [showThemeModal, setShowThemeModal] = useState(false)
-  const [selectedTheme, setSelectedTheme] = useState('')
   const [showThemeModal, setShowThemeModal] = useState(false)
   const [selectedTheme, setSelectedTheme] = useState('')
   const supabase = createClient()
