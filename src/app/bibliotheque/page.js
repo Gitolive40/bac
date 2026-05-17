@@ -277,6 +277,7 @@ export default function Bibliotheque() {
                 </div>
               ))}
             </div>
+            </>
           )}
         </>
       )}
