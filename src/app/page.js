@@ -239,7 +239,7 @@ function GenScreen({ progress, stepIdx }) {
   )
 }
 
-function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword, saveConfirm, setSaveConfirm, showThemeModal, setShowThemeModal, selectedTheme, setSelectedTheme }) {
+function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword, saveConfirm, setSaveConfirm, showThemeModal, setShowThemeModal, doExportPDF }) {
   const [tab, setTab] = useState('fiche')
   const [fiche, setFiche] = useState(data.fiche)
   const [analyse, setAnalyse] = useState(data.analyse)
@@ -556,37 +556,6 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
         </div>
       )}
 
-      {/* Modal sélection thème */}
-      {showThemeModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.45)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20 }}>
-          <div style={{ background:'#fff', borderRadius:16, padding:28, maxWidth:360, width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,.2)' }}>
-            <div style={{ marginBottom:20 }}>
-              <div style={{ fontSize:15, fontWeight:600, marginBottom:4 }}>Choisir un dossier</div>
-              <div style={{ fontSize:12, color:'var(--g400)' }}>Dans quel dossier sauvegarder cette analyse ?</div>
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {[
-                { key:'Poesie', label:'Poésie', icon:'ti-writing' },
-                { key:'Romans', label:'Romans', icon:'ti-book' },
-                { key:'Theatre', label:'Théâtre', icon:'ti-masks-theater' },
-                { key:'Debat_d_idees', label:'Débat d’idées', icon:'ti-message-dots' },
-                { key:'Divers', label:'Divers', icon:'ti-folder' },
-              ].map(t => (
-                <button key={t.key}
-                  onClick={() => { setShowThemeModal(false); doExportPDF(t.key) }}
-                  style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'var(--g50)', border:'0.5px solid var(--g200)', borderRadius:8, cursor:'pointer', fontSize:14, fontFamily:'inherit', textAlign:'left' }}>
-                  <i className={`ti ${t.icon}`} style={{ fontSize:20, color:'var(--b600)', flexShrink:0 }} />
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setShowThemeModal(false)}
-              style={{ width:'100%', marginTop:12, padding:'8px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)', fontFamily:'inherit' }}>
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Modal connexion */}
       {showLoginModal && (
