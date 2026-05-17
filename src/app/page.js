@@ -239,7 +239,7 @@ function GenScreen({ progress, stepIdx }) {
   )
 }
 
-function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword, saveConfirm, setSaveConfirm }) {
+function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal, loginEmail, setLoginEmail, loginPassword, setLoginPassword, loginError, setLoginError, loginIsSignup, setLoginIsSignup, loginWithPassword, saveConfirm, setSaveConfirm, showThemeModal, setShowThemeModal, selectedTheme, setSelectedTheme }) {
   const [tab, setTab] = useState('fiche')
   const [fiche, setFiche] = useState(data.fiche)
   const [analyse, setAnalyse] = useState(data.analyse)
@@ -253,12 +253,13 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
   ))
   const upT = (mi, v) => setAnalyse(a => a.map((m, i) => i === mi ? { ...m, transition: v } : m))
 
-  const exportPDF = async () => {
-    // Si non connecté, afficher modal de connexion
-    if (!user) {
-      setShowLoginModal(true)
-      return
-    }
+  const exportPDF = () => {
+    if (!user) { setShowLoginModal(true); return }
+    setShowThemeModal(true)
+  }
+
+  const doExportPDF = async (theme) => {
+    setShowThemeModal(false)
 
     const mvts = (fiche.mouvements || []).map(m =>
       `<div style="margin-bottom:6px">
@@ -500,20 +501,39 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
 
       // 2. Sauvegarder dans Supabase
       const date = new Date().toISOString().slice(0, 10)
-      const filename = (fiche.titre + '_' + date + '.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
+      const ts = Date.now()
+      const filename = (fiche.titre + '_' + date + '_' + ts + '.pdf').replace(/[^a-zA-Z0-9._-]/g, '_')
+
+      // Détecter le thème/genre automatiquement depuis la carte d'identité
+      const genreRaw = (fiche.genre || '').toLowerCase()
+      let theme = 'Divers'
+      if (genreRaw.includes('po') || genreRaw.includes('vers') || genreRaw.includes('sonnet') || genreRaw.includes('lyr')) {
+        theme = 'Poesie'
+      } else if (genreRaw.includes('roman') || genreRaw.includes('nou') || genreRaw.includes('recit') || genreRaw.includes('narr')) {
+        theme = 'Romans'
+      } else if (genreRaw.includes('th') || genreRaw.includes('com') || genreRaw.includes('trag') || genreRaw.includes('drame') || genreRaw.includes('pi')) {
+        theme = 'Theatre'
+      } else if (genreRaw.includes('essai') || genreRaw.includes('id') || genreRaw.includes('phil') || genreRaw.includes('arg') || genreRaw.includes('disc') || genreRaw.includes('débat')) {
+        theme = 'Debat_d_idees'
+      }
+
       const formData = new FormData()
       formData.append('file', pdfBlob, filename)
       formData.append('userId', user.id)
+      formData.append('theme', theme)
       formData.append('oeuvre', fiche.titre || 'Sans_titre')
       formData.append('filename', filename)
       const res = await fetch('/api/storage', { method: 'POST', body: formData })
       if (res.ok) {
         setSaveConfirm(true)
         setTimeout(() => setSaveConfirm(false), 3000)
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error('Storage: ' + (errData.error || res.status))
       }
     } catch(e) {
       console.error('Erreur sauvegarde PDF:', e)
-      alert('Erreur : ' + e.message)
+      alert('Erreur détaillée : ' + e.message + ' | ' + e.name)
     }
 
     // Sauvegarde uniquement — pas d'ouverture automatique
@@ -521,6 +541,31 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+      {/* Modal sélection thème */}
+      {showThemeModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.4)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20 }}>
+          <div style={{ background:'#fff', borderRadius:16, padding:28, maxWidth:340, width:'100%', boxShadow:'0 20px 60px rgba(0,0,0,.2)' }}>
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:15, fontWeight:600, marginBottom:4 }}>Choisir une catégorie</div>
+              <div style={{ fontSize:12, color:'var(--g400)' }}>Dans quel dossier enregistrer cette analyse ?</div>
+            </div>
+            {['Poesie', 'Romans', 'Theatre', 'Debat_d_idees'].map(theme => (
+              <button key={theme} onClick={() => doExportPDF(theme)}
+                style={{ display:'flex', alignItems:'center', gap:12, width:'100%', padding:'12px 14px', marginBottom:8, background:'var(--g50)', border:'0.5px solid var(--g200)', borderRadius:10, cursor:'pointer', fontSize:13, fontWeight:500, textAlign:'left' }}>
+                <span style={{ fontSize:20 }}>
+                  {theme === 'Poesie' ? '📝' : theme === 'Romans' ? '📖' : theme === 'Theatre' ? '🎭' : '💬'}
+                </span>
+                {theme === 'Poesie' ? 'Poésie' : theme === 'Romans' ? 'Romans' : theme === 'Theatre' ? 'Théâtre' : "Débat d'idées"}
+              </button>
+            ))}
+            <button onClick={() => setShowThemeModal(false)}
+              style={{ width:'100%', marginTop:4, padding:'8px', background:'none', border:'none', cursor:'pointer', fontSize:12, color:'var(--g400)' }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal connexion */}
       {showLoginModal && (
@@ -718,6 +763,8 @@ export default function Page() {
   const [loginError, setLoginError] = useState('')
   const [loginIsSignup, setLoginIsSignup] = useState(false)
   const [saveConfirm, setSaveConfirm] = useState(false)
+  const [showThemeModal, setShowThemeModal] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
@@ -813,6 +860,8 @@ export default function Page() {
       loginIsSignup={loginIsSignup} setLoginIsSignup={setLoginIsSignup}
       loginWithPassword={loginWithPassword}
       saveConfirm={saveConfirm} setSaveConfirm={setSaveConfirm}
+      showThemeModal={showThemeModal} setShowThemeModal={setShowThemeModal}
+      selectedTheme={selectedTheme} setSelectedTheme={setSelectedTheme}
     />
   }
 

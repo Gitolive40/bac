@@ -7,6 +7,7 @@ export default function Bibliotheque() {
   const [user, setUser] = useState(null)
   const [dossiers, setDossiers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [themeOuvert, setThemeOuvert] = useState(null)
   const [dossierOuvert, setDossierOuvert] = useState(null)
   const [fichiers, setFichiers] = useState([])
   const supabase = createClient()
@@ -49,49 +50,57 @@ export default function Bibliotheque() {
 
   const chargerDossiers = async (userId) => {
     setLoading(true)
+    // Lister les dossiers d'oeuvres directement sous userId/
     const { data, error } = await supabase.storage
       .from('analyses')
-      .list(userId, { limit: 100 })
+      .list(userId, { limit: 100, sortBy: { column: 'name', order: 'asc' } })
 
     if (!error && data) {
-      setDossiers(data.filter(d => !d.metadata))
+      // Filtrer uniquement les dossiers (pas de metadata = dossier)
+      const dossiersList = data.filter(d => !d.metadata && !d.id)
+      if (dossiersList.length > 0) {
+        setDossiers(dossiersList)
+      } else {
+        // Essayer de lister les fichiers directement
+        setDossiers(data.filter(d => !d.metadata))
+      }
     }
     setLoading(false)
+  }
+
+  const ouvrirTheme = async (nomTheme) => {
+    setThemeOuvert(nomTheme)
+    setDossierOuvert(null)
+    setFichiers([])
+    const { data } = await supabase.storage
+      .from('analyses')
+      .list(`${user.id}/${nomTheme}`, { limit: 100 })
+    setDossiers(data ? data.filter(d => !d.metadata) : [])
   }
 
   const ouvrirDossier = async (nomDossier) => {
     setDossierOuvert(nomDossier)
     const { data } = await supabase.storage
       .from('analyses')
-      .list(`${user.id}/${nomDossier}`, { limit: 100 })
-    setFichiers(data || [])
+      .list(`${user.id}/${themeOuvert}/${nomDossier}`, { limit: 100 })
+    setFichiers(data ? data.filter(d => d.metadata) : [])
   }
 
   const telecharger = (nomFichier) => {
-    // Ouvrir via la page viewer de l'app — fonctionne sur tous les appareils
-    const path = encodeURIComponent(`${user.id}/${dossierOuvert}/${nomFichier}`)
+    const path = encodeURIComponent(`${user.id}/${themeOuvert}/${dossierOuvert}/${nomFichier}`)
     window.open(`/viewer?path=${path}`, '_blank')
   }
 
-  const telechargerFichier = async (nomFichier) => {
-    const { data, error } = await supabase.storage
-      .from('analyses')
-      .createSignedUrl(`${user.id}/${dossierOuvert}/${nomFichier}`, 3600)
-    if (error || !data?.signedUrl) { alert('Erreur lors du téléchargement'); return }
-    
-    const a = document.createElement('a')
-    a.href = data.signedUrl
-    a.download = nomFichier
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+  const telechargerFichier = (nomFichier) => {
+    const path = encodeURIComponent(`${user.id}/${themeOuvert}/${dossierOuvert}/${nomFichier}`)
+    window.open(`/viewer?path=${path}&print=1`, '_blank')
   }
 
   const supprimer = async (nomFichier) => {
     if (!confirm(`Supprimer "${nomFichier}" ?`)) return
     await supabase.storage
       .from('analyses')
-      .remove([`${user.id}/${dossierOuvert}/${nomFichier}`])
+      .remove([`${user.id}/${themeOuvert}/${dossierOuvert}/${nomFichier}`])
     setFichiers(f => f.filter(f => f.name !== nomFichier))
   }
 
@@ -224,12 +233,12 @@ export default function Bibliotheque() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
               {dossiers.map(d => (
-                <div key={d.name} onClick={() => ouvrirDossier(d.name)}
+                <div key={d.name} onClick={() => { if (!themeOuvert) ouvrirTheme(d.name); else ouvrirDossier(d.name) }}
                   style={{ padding: '20px 16px', background: '#fff', border: '0.5px solid var(--g200)', borderRadius: 10, cursor: 'pointer', transition: 'border-color .15s' }}
                   onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--b400)'}
                   onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--g200)'}
                 >
-                  <i className="ti ti-folder" style={{ fontSize: 32, color: 'var(--b600)', display: 'block', marginBottom: 8 }} />
+                  <i className={`ti ti-${!themeOuvert ? 'books' : 'folder'}`} style={{ fontSize: 32, color: 'var(--b600)', display: 'block', marginBottom: 8 }} />
                   <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--g800)' }}>{d.name.replace(/_/g, ' ')}</div>
                 </div>
               ))}

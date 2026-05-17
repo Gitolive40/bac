@@ -8,6 +8,7 @@ export async function POST(request) {
     const file = formData.get('file')
     const userId = formData.get('userId')
     const oeuvre = formData.get('oeuvre')
+    const theme = formData.get('theme') || 'Divers'
     const filename = formData.get('filename')
 
     if (!file || !userId || !oeuvre) {
@@ -16,16 +17,17 @@ export async function POST(request) {
 
     const supabase = createAdminClient()
 
-    // Chemin : userId/oeuvre/filename.pdf
-    // Supprimer les accents et caractères spéciaux pour le chemin Supabase
+    // Normaliser le nom de l'oeuvre (supprimer accents et caractères spéciaux)
     const safeName = oeuvre
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .replace(/[^a-zA-Z0-9 -]/g, '')
       .trim()
-      .replace(/\s+/g, '_')
+      .replace(/ +/g, '_')
       .slice(0, 50)
-    const path = `${userId}/${safeName}/${filename}`
+
+    // Chemin : userId/theme/oeuvre/filename.pdf
+    const path = `${userId}/${theme}/${safeName}/${filename}`
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
