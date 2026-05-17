@@ -573,7 +573,7 @@ function ResultScreen({ data, onRestart, user, showLoginModal, setShowLoginModal
                 { key:'Poesie', label:'Poésie', icon:'ti-writing' },
                 { key:'Romans', label:'Romans', icon:'ti-book' },
                 { key:'Theatre', label:'Théâtre', icon:'ti-masks-theater' },
-                { key:'Debat_d_idees', label:'Débat d'idées', icon:'ti-message-dots' },
+                { key:'Debat_d_idees', label:'Débat d’idées', icon:'ti-message-dots' },
                 { key:'Divers', label:'Divers', icon:'ti-folder' },
               ].map(t => (
                 <button key={t.key}
