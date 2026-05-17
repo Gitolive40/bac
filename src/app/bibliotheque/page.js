@@ -50,20 +50,16 @@ export default function Bibliotheque() {
 
   const chargerDossiers = async (userId) => {
     setLoading(true)
-    // Lister les dossiers d'oeuvres directement sous userId/
+    setThemeOuvert(null)
+    setDossierOuvert(null)
+    setFichiers([])
+    // Lister les dossiers thèmes (Poesie, Romans, Theatre, Debat_d_idees)
     const { data, error } = await supabase.storage
       .from('analyses')
       .list(userId, { limit: 100, sortBy: { column: 'name', order: 'asc' } })
 
     if (!error && data) {
-      // Filtrer uniquement les dossiers (pas de metadata = dossier)
-      const dossiersList = data.filter(d => !d.metadata && !d.id)
-      if (dossiersList.length > 0) {
-        setDossiers(dossiersList)
-      } else {
-        // Essayer de lister les fichiers directement
-        setDossiers(data.filter(d => !d.metadata))
-      }
+      setDossiers(data.filter(d => !d.metadata))
     }
     setLoading(false)
   }
@@ -72,6 +68,7 @@ export default function Bibliotheque() {
     setThemeOuvert(nomTheme)
     setDossierOuvert(null)
     setFichiers([])
+    // Lister les dossiers d'oeuvres dans ce thème
     const { data } = await supabase.storage
       .from('analyses')
       .list(`${user.id}/${nomTheme}`, { limit: 100 })
@@ -192,7 +189,7 @@ export default function Bibliotheque() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <a href="/" className="btn"><i className="ti ti-plus" /> Nouvelle analyse</a>
-          <button className="btn" onClick={seDeconnecter}><i className="ti ti-logout" /> Déconnexion</button>
+          <button className="btn" onClick={seDeconnecter} title="Déconnexion" style={{padding:'7px 10px'}}><i className="ti ti-logout" style={{fontSize:18}} /></button>
         </div>
       </div>
 
